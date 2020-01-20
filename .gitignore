@@ -1,0 +1,8 @@
+magic/__pycache__/
+magic/mixture/__pycache__/
+magic/reconstruction/__pycache__/
+./magic/data/
+models/
+plots/
+*.npy
+__pycache__/
