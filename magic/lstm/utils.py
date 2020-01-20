@@ -54,8 +54,8 @@ def interpret_label(label):
     return {
         'screw_axis': (torch.mean(l_hat_array, dim=0).cpu(),
                        torch.mean(m_array, dim=0).cpu()),
-        'screw_axis_std': (torch.std(l_hat_array, dim=0).cpu(),
-                           torch.std(m_array, dim=0).cpu()),
+        'l_hat_array': l_hat_array.cpu(),
+        'm_array': m_array.cpu(),
         'theta_array': q_array.cpu(),
         'd_array': d_array.cpu()
     }
@@ -81,3 +81,4 @@ def interpret_label(label):
     #         'reference_frame': ref_frame,
     #         'configs': configs,
     #         'params': params}
+

@@ -125,47 +125,43 @@ class ModelTrainer(object):
         np.save('plots/' + self.name + '/tlosses.npy', np.array(self.tlosses))
 
     def test_best_model(self, best_model):
-        all_l_hat_stds = []
-        all_m_stds = []
         with torch.no_grad():
             for i, X in enumerate(self.testloader):
                 depth, labels = X['depth'].to(self.device), X['label'].to(self.device)
                 y_pred = best_model(depth)
+                y_pred = y_pred.view(y_pred.size(0), -1, 8)
 
-                for j in range(y_pred.size(0)):
-                    pred_label = interpret_label(y_pred[j, :])
-                    all_l_hat_stds.append(pred_label['screw_axis_std'][0].numpy())
-                    all_m_stds.append(pred_label['screw_axis_std'][1].numpy())
+                err = labels - y_pred
+                all_l_hat_err = torch.mean(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu().numpy()
+                all_m_err = torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu().numpy()
+                all_q_err = torch.mean(err[:, :, 6], dim=-1).cpu().numpy()
+                all_d_err = torch.mean(err[:, :, 7], dim=-1).cpu().numpy()
+
 
         # Plot variation of screw axis
-        nbins = 32
-        all_l_hat_stds = np.array(all_l_hat_stds)
-        all_m_stds = np.array(all_m_stds)
+        x_axis = np.arange(labels.size(0))
 
-        # l_hat
-        fig1, axs1 = plt.subplots(1, 3, sharey=True)
-        axs1[0].hist(all_l_hat_stds[:, 0], bins=nbins)
-        axs1[1].hist(all_l_hat_stds[:, 1], bins=nbins)
-        axs1[2].hist(all_l_hat_stds[:, 2], bins=nbins)
+        # Screw Axis
+        fig, axs = plt.subplots(1, 2, sharey=True)
+        axs[0].plot(x_axis, all_l_hat_err)
+        axs[1].plot(x_axis, all_m_err)
 
-        axs1[0].set_title('x_axis')
-        axs1[1].set_title('y_axis')
-        axs1[2].set_title('z_axis')
-        fig1.suptitle('Histogram of std in predicting l_hat', fontsize=16)
-        fig1.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.savefig('plots/' + self.name + '/l_hat_std.png')
+        axs[0].set_title('Mean error in l_hat')
+        axs[1].set_title('Mean error in m')
+
+        fig.suptitle('Screw Axis error', fontsize=16)
+        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.savefig('plots/' + self.name + '/axis_err.png')
         plt.close()
 
-        # m
-        fig2, axs2 = plt.subplots(1, 3, sharey=True)
-        axs2[0].hist(all_m_stds[:, 0], bins=nbins, label='x_axis')
-        axs2[1].hist(all_m_stds[:, 1], bins=nbins, label='y_axis')
-        axs2[2].hist(all_m_stds[:, 2], bins=nbins, label='z_axis')
+        fig1, axs1 = plt.subplots(1, 2, sharey=True)
+        axs1[0].plot(x_axis, all_q_err)
+        axs1[1].plot(x_axis, all_d_err)
 
-        axs2[0].set_title('x_axis')
-        axs2[1].set_title('y_axis')
-        axs2[2].set_title('z_axis')
-        fig2.suptitle('Histogram of std in predicting m', fontsize=16)
-        fig2.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.savefig('plots/' + self.name + '/m_std.png')
+        axs1[0].set_title('Mean error in q')
+        axs1[1].set_title('Mean error in d')
+
+        fig1.suptitle('Mean configuration errors', fontsize=16)
+        fig1.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.savefig('plots/' + self.name + '/conf_errs.png')
         plt.close()
