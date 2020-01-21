@@ -50,14 +50,14 @@ class ArticulationDataset(Dataset):
         # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
         label = np.empty((len(q_vals), 8))
 
-        # for i, q in enumerate(q_vals):
-        #     label[i, :] = np.concatenate((l_hat, m, q, d))
-
-        # Construct dual quaternions
-        dq = dualquat.zeros()
         for i, q in enumerate(q_vals):
-            dualquat.from_screw(dq, q[0], d, l_hat, m)
-            label[i, :] = np.concatenate((dq.real.data, dq.dual.data))
+            label[i, :] = np.concatenate((l_hat, m, q, d))
+
+        # # Construct dual quaternions
+        # dq = dualquat.zeros()
+        # for i, q in enumerate(q_vals):
+        #     dualquat.from_screw(dq, q[0], d, l_hat, m)
+        #     label[i, :] = np.concatenate((dq.real.data, dq.dual.data))
 
         # ref_frame = obj_data['reference_frame_in_world']
         # moving_frames = obj_data['moving_frame_in_ref_frame']
