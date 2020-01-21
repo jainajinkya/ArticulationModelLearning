@@ -69,9 +69,12 @@ if __name__ == "__main__":
                            obj=args.obj,
                            ndof=args.ndof)
 
+    # Testing if model is learning anything
+    trainer.test_best_model(trainer.model, fname_suffix='_pretraining')
+
     # train
     best_model = trainer.train()
 
     # Test best model
-    trainer.test_best_model(best_model)
+    trainer.test_best_model(best_model, fname_suffix='_posttraining')
 
