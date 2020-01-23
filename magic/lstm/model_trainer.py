@@ -136,7 +136,6 @@ class ModelTrainer(object):
                 y_pred = best_model(depth)
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
 
-                import pdb; pdb.set_trace()
                 if dual_quat_mode:
                     y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
                     labels = dual_quaternion_to_screw_batch_mode(labels)

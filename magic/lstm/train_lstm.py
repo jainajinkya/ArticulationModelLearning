@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # init model
     network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                              drop_p=args.drop_p, h_fc_dim=256)
+                              drop_p=args.drop_p, h_fc_dim=256, n_output=120)
 
     # setup trainer
     if torch.cuda.is_available():
