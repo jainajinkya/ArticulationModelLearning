@@ -162,31 +162,6 @@ class ModelTrainer(object):
         # Plot variation of screw axis
         x_axis = np.arange(all_l_hat_err.size(0))
 
-        # Screw Axis
-        # fig, axs = plt.subplots(1, 2)
-        # axs[0].plot(x_axis, all_l_hat_err.numpy())
-        # axs[1].plot(x_axis, all_m_err.numpy())
-        #
-        # axs[0].set_title('Mean error in l_hat')
-        # axs[1].set_title('Mean error in m')
-        #
-        # fig.suptitle('Screw Axis error', fontsize=16)
-        # fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-        # plt.savefig('plots/' + self.name + '/axis_err' + fname_suffix + '.png')
-        # plt.close()
-        #
-        # fig1, axs1 = plt.subplots(1, 2)
-        # axs1[0].plot(x_axis, all_q_err.numpy())
-        # axs1[1].plot(x_axis, all_d_err.numpy())
-        #
-        # axs1[0].set_title('Mean error in q')
-        # axs1[1].set_title('Mean error in d')
-        #
-        # fig1.suptitle('Mean configuration errors', fontsize=16)
-        # fig1.tight_layout(rect=[0, 0.03, 1, 0.95])
-        # plt.savefig('plots/' + self.name + '/conf_errs' + fname_suffix + '.png')
-        # plt.close()
-
         fig = plt.figure(1)
         plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), capsize=3., capthick=1.)
         plt.xlabel("Test object number")
