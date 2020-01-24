@@ -58,7 +58,7 @@ class KinematicLSTMv0(nn.Module):
 
 def articulation_lstm_loss(pred, target):
     pred = pred.view(pred.size(0), -1, 8)
-
-    # Calculate orientation error
-    loss = torch.mean((pred - target)**2)
+    wt_on_conf = 5.
+    err = (pred - target)**2
+    loss = torch.mean(torch.cat((err[:, :, :6], wt_on_conf*err[:, :, 6:]), dim=-1))
     return loss
