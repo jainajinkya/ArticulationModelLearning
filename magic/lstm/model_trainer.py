@@ -46,7 +46,7 @@ class ModelTrainer(object):
 
     def train(self):
         best_tloss = 1e8
-        for epoch in range(self.epochs):
+        for epoch in range(self.epochs + 1):
             sys.stdout.flush()
             loss = self.train_epoch(epoch)
             self.losses.append(loss)
@@ -129,6 +129,10 @@ class ModelTrainer(object):
         all_m_err = torch.empty(0)
         all_q_err = torch.empty(0)
         all_d_err = torch.empty(0)
+        all_l_hat_std = torch.empty(0)
+        all_m_std = torch.empty(0)
+        all_q_std = torch.empty(0)
+        all_d_std = torch.empty(0)
 
         with torch.no_grad():
             for X in self.testloader:
@@ -146,31 +150,72 @@ class ModelTrainer(object):
                 all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
                 all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
                 all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
+                all_l_hat_std = torch.cat(
+                    (all_l_hat_std, torch.std(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
+                all_m_std = torch.cat((all_m_std, torch.std(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+                all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
+                all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
         
         # Plot variation of screw axis
         x_axis = np.arange(all_l_hat_err.size(0))
 
         # Screw Axis
-        fig, axs = plt.subplots(1, 2)
-        axs[0].plot(x_axis, all_l_hat_err.numpy())
-        axs[1].plot(x_axis, all_m_err.numpy())
+        # fig, axs = plt.subplots(1, 2)
+        # axs[0].plot(x_axis, all_l_hat_err.numpy())
+        # axs[1].plot(x_axis, all_m_err.numpy())
+        #
+        # axs[0].set_title('Mean error in l_hat')
+        # axs[1].set_title('Mean error in m')
+        #
+        # fig.suptitle('Screw Axis error', fontsize=16)
+        # fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+        # plt.savefig('plots/' + self.name + '/axis_err' + fname_suffix + '.png')
+        # plt.close()
+        #
+        # fig1, axs1 = plt.subplots(1, 2)
+        # axs1[0].plot(x_axis, all_q_err.numpy())
+        # axs1[1].plot(x_axis, all_d_err.numpy())
+        #
+        # axs1[0].set_title('Mean error in q')
+        # axs1[1].set_title('Mean error in d')
+        #
+        # fig1.suptitle('Mean configuration errors', fontsize=16)
+        # fig1.tight_layout(rect=[0, 0.03, 1, 0.95])
+        # plt.savefig('plots/' + self.name + '/conf_errs' + fname_suffix + '.png')
+        # plt.close()
 
-        axs[0].set_title('Mean error in l_hat')
-        axs[1].set_title('Mean error in m')
+        fig = plt.figure(1)
+        plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), capsize=10., capthick=2.)
+        plt.xlabel("Test object number")
+        plt.ylabel("Error")
+        plt.title("Test error in l_hat")
+        plt.tight_layout()
+        plt.savefig('plots/' + self.name + '/l_hat_err' + fname_suffix + '.png')
+        plt.close(fig)
 
-        fig.suptitle('Screw Axis error', fontsize=16)
-        fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.savefig('plots/' + self.name + '/axis_err' + fname_suffix + '.png')
-        plt.close()
+        fig = plt.figure(2)
+        plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), capsize=10., capthick=2.)
+        plt.xlabel("Test object number")
+        plt.ylabel("Error")
+        plt.title("Test error in m")
+        plt.tight_layout()
+        plt.savefig('plots/' + self.name + '/m_err' + fname_suffix + '.png')
+        plt.close(fig)
 
-        fig1, axs1 = plt.subplots(1, 2)
-        axs1[0].plot(x_axis, all_q_err.numpy())
-        axs1[1].plot(x_axis, all_d_err.numpy())
+        fig = plt.figure(3)
+        plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=10., capthick=2.)
+        plt.xlabel("Test object number")
+        plt.ylabel("Error")
+        plt.title("Test error in theta")
+        plt.tight_layout()
+        plt.savefig('plots/' + self.name + '/theta_err' + fname_suffix + '.png')
+        plt.close(fig)
 
-        axs1[0].set_title('Mean error in q')
-        axs1[1].set_title('Mean error in d')
-
-        fig1.suptitle('Mean configuration errors', fontsize=16)
-        fig1.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.savefig('plots/' + self.name + '/conf_errs' + fname_suffix + '.png')
-        plt.close()
+        fig = plt.figure(4)
+        plt.errorbar(x_axis, all_d_err.numpy(), all_d_std.numpy(), capsize=10., capthick=2.)
+        plt.xlabel("Test object number")
+        plt.ylabel("Error")
+        plt.title("Test error in d")
+        plt.tight_layout()
+        plt.savefig('plots/' + self.name + '/d_err' + fname_suffix + '.png')
+        plt.close(fig)
