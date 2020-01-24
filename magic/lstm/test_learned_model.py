@@ -20,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch', type=int, default=128, help='batch size')
     parser.add_argument('--nwork', type=int, default=8, help='num_workers')
     parser.add_argument('--device', type=int, default=0, help='cuda device')
+    parser.add_argument('--dual-quat', action='store_true', default=False, help='Dual quaternion representation or not')
     args = parser.parse_args()
 
     testset = ArticulationDataset(args.ntest,
@@ -56,9 +57,9 @@ if __name__ == "__main__":
             y_pred = best_model(depth)
             y_pred = y_pred.view(y_pred.size(0), -1, 8)
 
-            # if dual_quat_mode:
-            #     y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
-            #     labels = dual_quaternion_to_screw_batch_mode(labels)
+            if args.dual_quat:
+                y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
+                labels = dual_quaternion_to_screw_batch_mode(labels)
 
             err = labels - y_pred
             all_l_hat_err = torch.cat(
