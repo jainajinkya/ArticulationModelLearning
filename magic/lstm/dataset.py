@@ -50,20 +50,20 @@ class ArticulationDataset(Dataset):
             pt1_T_pt2 = change_frames(pt1, pt2)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
-            # l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
-            #                                         quat_in_wxyz=pt1_T_pt2[3:])
+            l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+                                                    quat_in_wxyz=pt1_T_pt2[3:])
             # print("Screw notation: {}\t{}\t{}\t{}".format(np.round(l_hat, 4),
             #                                               np.round(m, 4),
             #                                               np.round(theta, 4),
             #                                               np.round(d, 4)))
-            # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))
+            label[i, :] = np.concatenate((l_hat, m, [theta], [d]))
 
             # # Generating labels in dual quaternions
-            dq = dq3d.dualquat(dq3d.quat(quat_as_xyzw(pt1_T_pt2[3:])), pt1_T_pt2[:3])
-            # print("Dual Quaternion: {}\t{}".format(np.round(dq.real.data, 4),
-            #                                        np.round(dq.dual.data, 4)))
-            label[i, :] = np.concatenate((np.array([dq.real.w, dq.real.x, dq.real.y, dq.real.z]),
-                                          np.array([dq.dual.w, dq.dual.x, dq.dual.y, dq.dual.z])))
+            # dq = dq3d.dualquat(dq3d.quat(quat_as_xyzw(pt1_T_pt2[3:])), pt1_T_pt2[:3])
+            # # print("Dual Quaternion: {}\t{}".format(np.round(dq.real.data, 4),
+            # #                                        np.round(dq.dual.data, 4)))
+            # label[i, :] = np.concatenate((np.array([dq.real.w, dq.real.x, dq.real.y, dq.real.z]),
+            #                               np.array([dq.dual.w, dq.dual.x, dq.dual.y, dq.dual.z])))
 
         label = torch.from_numpy(label).float()
         sample = {'depth': depth_imgs,
