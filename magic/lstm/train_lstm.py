@@ -69,8 +69,8 @@ if __name__ == "__main__":
                            obj=args.obj,
                            ndof=args.ndof)
 
-    # Testing if model is learning anything
-    trainer.test_best_model(trainer.model, fname_suffix='_pretraining', dual_quat_mode=True)
+    ## Testing if model is learning anything
+    #trainer.test_best_model(trainer.model, fname_suffix='_pretraining', dual_quat_mode=True)
 
     # train
     best_model = trainer.train()
