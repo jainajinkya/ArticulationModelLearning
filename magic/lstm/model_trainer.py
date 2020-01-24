@@ -125,6 +125,8 @@ class ModelTrainer(object):
         np.save('plots/' + self.name + '/tlosses.npy', np.array(self.tlosses))
 
     def test_best_model(self, best_model, fname_suffix='', dual_quat_mode=False):
+        best_model.eval()  # Put model in evaluation mode
+
         all_l_hat_err = torch.empty(0)
         all_m_err = torch.empty(0)
         all_q_err = torch.empty(0)
@@ -150,6 +152,7 @@ class ModelTrainer(object):
                 all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
                 all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
                 all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
+
                 all_l_hat_std = torch.cat(
                     (all_l_hat_std, torch.std(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
                 all_m_std = torch.cat((all_m_std, torch.std(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
@@ -185,7 +188,7 @@ class ModelTrainer(object):
         # plt.close()
 
         fig = plt.figure(1)
-        plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), capsize=10., capthick=2.)
+        plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), capsize=3., capthick=1.)
         plt.xlabel("Test object number")
         plt.ylabel("Error")
         plt.title("Test error in l_hat")
@@ -194,7 +197,7 @@ class ModelTrainer(object):
         plt.close(fig)
 
         fig = plt.figure(2)
-        plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), capsize=10., capthick=2.)
+        plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), capsize=3., capthick=1.)
         plt.xlabel("Test object number")
         plt.ylabel("Error")
         plt.title("Test error in m")
@@ -203,7 +206,7 @@ class ModelTrainer(object):
         plt.close(fig)
 
         fig = plt.figure(3)
-        plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=10., capthick=2.)
+        plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
         plt.xlabel("Test object number")
         plt.ylabel("Error")
         plt.title("Test error in theta")
@@ -212,7 +215,7 @@ class ModelTrainer(object):
         plt.close(fig)
 
         fig = plt.figure(4)
-        plt.errorbar(x_axis, all_d_err.numpy(), all_d_std.numpy(), capsize=10., capthick=2.)
+        plt.errorbar(x_axis, all_d_err.numpy(), all_d_std.numpy(), capsize=3., capthick=1.)
         plt.xlabel("Test object number")
         plt.ylabel("Error")
         plt.title("Test error in d")

@@ -67,6 +67,7 @@ if __name__ == "__main__":
             all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
             all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
             all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
+
             all_l_hat_std = torch.cat(
                 (all_l_hat_std, torch.std(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
             all_m_std = torch.cat((all_m_std, torch.std(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
