@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('--ndof', type=int, default=1, help='how many degrees of freedom in the object class?')
     parser.add_argument('--batch', type=int, default=128, help='batch size')
     parser.add_argument('--nwork', type=int, default=8, help='num_workers')
+    parser.add_argument('--device', type=int, default=0, help='cuda device')
     args = parser.parse_args()
 
     testset = ArticulationDataset(args.ntest,
@@ -29,9 +30,15 @@ if __name__ == "__main__":
                                              shuffle=True, num_workers=args.nwork,
                                              pin_memory=True)
 
+    if torch.cuda.is_available():
+        device = torch.device(args.device)
+    else:
+        device = torch.device('cpu')
+
     # load model
     best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=120)
     best_model.load_state_dict(torch.load(args.model_dir + args.model_name + '.net'))
+    best_model.float().to(device)
     best_model.eval()
 
     all_l_hat_err = torch.empty(0)
@@ -45,7 +52,7 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         for X in testloader:
-            depth, labels = X['depth'], X['label']
+            depth, labels = X['depth'].to(device), X['label'].to(device)
             y_pred = best_model(depth)
             y_pred = y_pred.view(y_pred.size(0), -1, 8)
 
@@ -69,7 +76,7 @@ if __name__ == "__main__":
     x_axis = np.arange(all_l_hat_err.size(0))
 
     fig = plt.figure(1)
-    plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), capsize=10., capthick=2.)
+    plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
     plt.ylabel("Error")
     plt.title("Test error in l_hat")
@@ -78,7 +85,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     fig = plt.figure(2)
-    plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), capsize=10., capthick=2.)
+    plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
     plt.ylabel("Error")
     plt.title("Test error in m")
@@ -87,7 +94,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     fig = plt.figure(3)
-    plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=10., capthick=2.)
+    plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
     plt.ylabel("Error")
     plt.title("Test error in theta")
@@ -96,7 +103,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     fig = plt.figure(4)
-    plt.errorbar(x_axis, all_d_err.numpy(), all_d_std.numpy(), capsize=10., capthick=2.)
+    plt.errorbar(x_axis, all_d_err.numpy(), all_d_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
     plt.ylabel("Error")
     plt.title("Test error in d")
