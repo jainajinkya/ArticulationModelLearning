@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 from ArticulationModelLearning.magic.lstm.models import articulation_lstm_loss
-from ArticulationModelLearning.magic.lstm.utils import interpret_label
+from ArticulationModelLearning.magic.lstm.utils import interpret_label, dual_quaternion_to_screw_batch_mode
 
 
 class ModelTrainer(object):
@@ -124,7 +124,7 @@ class ModelTrainer(object):
         np.save('plots/' + self.name + '/losses.npy', np.array(self.losses))
         np.save('plots/' + self.name + '/tlosses.npy', np.array(self.tlosses))
 
-    def test_best_model(self, best_model, fname_suffix=''):
+    def test_best_model(self, best_model, fname_suffix='', dual_quat_mode=False):
         all_l_hat_err = torch.empty(0)
         all_m_err = torch.empty(0)
         all_q_err = torch.empty(0)
@@ -136,18 +136,22 @@ class ModelTrainer(object):
                 y_pred = best_model(depth)
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
 
+                if dual_quat_mode:
+                    y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
+                    labels = dual_quaternion_to_screw_batch_mode(labels)
+
                 err = labels - y_pred
                 all_l_hat_err = torch.cat(
                     (all_l_hat_err, torch.mean(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
                 all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
                 all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
                 all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
-
+        
         # Plot variation of screw axis
-        x_axis = np.arange(self.testloader.batch_size*len(self.testloader))
+        x_axis = np.arange(all_l_hat_err.size(0))
 
         # Screw Axis
-        fig, axs = plt.subplots(1, 2, sharey=True)
+        fig, axs = plt.subplots(1, 2)
         axs[0].plot(x_axis, all_l_hat_err.numpy())
         axs[1].plot(x_axis, all_m_err.numpy())
 
@@ -159,7 +163,7 @@ class ModelTrainer(object):
         plt.savefig('plots/' + self.name + '/axis_err' + fname_suffix + '.png')
         plt.close()
 
-        fig1, axs1 = plt.subplots(1, 2, sharey=True)
+        fig1, axs1 = plt.subplots(1, 2)
         axs1[0].plot(x_axis, all_q_err.numpy())
         axs1[1].plot(x_axis, all_d_err.numpy())
 

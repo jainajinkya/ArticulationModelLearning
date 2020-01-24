@@ -1,5 +1,6 @@
 import os
 
+import dq3d
 import numpy as np
 import h5py
 import torch
@@ -7,7 +8,8 @@ from torch.utils.data import Dataset
 from dq3d import quat, dualquat
 import transforms3d as tf3d
 
-from ArticulationModelLearning.magic.lstm.utils import quat_as_wxyz
+from ArticulationModelLearning.magic.lstm.utils import quat_as_wxyz, transform_to_screw, quat_as_xyzw
+from SyntheticArticulatedData.generation.utils import change_frames
 
 
 class ArticulationDataset(Dataset):
@@ -38,35 +40,30 @@ class ArticulationDataset(Dataset):
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
         # # Load labels
-        ref_frame = obj_data['joint_frame_in_world']
-        q_vals = obj_data['q']
+        moving_body_poses = obj_data['moving_frame_in_world']
 
-        l_hat = tf3d.quaternions.rotate_vector(np.array([0., 0., 1.]), quat_as_wxyz(ref_frame[3:]))
-        m = np.cross(ref_frame[:3], l_hat)
+        label = np.empty((len(moving_body_poses) - 1, 8))
 
-        """Currently  considering only microwave"""
-        d = np.array([0.])
+        for i in range(len(moving_body_poses) - 1):
+            pt1 = moving_body_poses[i, :]
+            pt2 = moving_body_poses[i + 1, :]
+            pt1_T_pt2 = change_frames(pt1, pt2)
 
-        # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
-        label = np.empty((len(q_vals), 8))
+            # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
+            # l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+            #                                         quat_in_wxyz=pt1_T_pt2[3:])
+            # print("Screw notation: {}\t{}\t{}\t{}".format(np.round(l_hat, 4),
+            #                                               np.round(m, 4),
+            #                                               np.round(theta, 4),
+            #                                               np.round(d, 4)))
+            # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))
 
-        for i, q in enumerate(q_vals):
-            label[i, :] = np.concatenate((l_hat, m, q, d))
-
-        # # Construct dual quaternions
-        # dq = dualquat.zeros()
-        # for i, q in enumerate(q_vals):
-        #     dualquat.from_screw(dq, q[0], d, l_hat, m)
-        #     label[i, :] = np.concatenate((dq.real.data, dq.dual.data))
-
-        # ref_frame = obj_data['reference_frame_in_world']
-        # moving_frames = obj_data['moving_frame_in_ref_frame']
-        # dq = dualquat(quat(ref_frame[3:]), ref_frame[:3])
-        # label = np.concatenate((dq.real.data, dq.dual.data))    # quat: x,y,z,w
-        #
-        # for pt in moving_frames:
-        #     dq = dualquat(quat(pt[3:]), pt[:3])
-        #     label = np.vstack((label, np.concatenate((dq.real.data, dq.dual.data))))
+            # # Generating labels in dual quaternions
+            dq = dq3d.dualquat(dq3d.quat(quat_as_xyzw(pt1_T_pt2[3:])), pt1_T_pt2[:3])
+            # print("Dual Quaternion: {}\t{}".format(np.round(dq.real.data, 4),
+            #                                        np.round(dq.dual.data, 4)))
+            label[i, :] = np.concatenate((np.array([dq.real.w, dq.real.x, dq.real.y, dq.real.z]),
+                                          np.array([dq.dual.w, dq.dual.x, dq.dual.y, dq.dual.z])))
 
         label = torch.from_numpy(label).float()
         sample = {'depth': depth_imgs,
