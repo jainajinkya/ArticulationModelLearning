@@ -62,7 +62,7 @@ def articulation_lstm_loss(pred, target, wt_on_ax=0.5, wt_on_conf=0.):
     loss = torch.mean(err)
 
     # Penalize spread of screw axis
-    loss += wt_on_ax*(torch.mean(err.std(dim=1)[:6]))
+    loss += wt_on_ax*(torch.mean(torch.std(err[:, :, :6], dim=1)))
 
     # Extra weight on configuration errors
     loss += torch.mean(wt_on_conf*err[:, :, 6:])
