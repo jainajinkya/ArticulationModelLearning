@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument('--model-dir', type=str, default='../../models/')
     parser.add_argument('--model-name', type=str, default='test_lstm')
     parser.add_argument('--test-dir', type=str, default='../../../data/test/microwave/')
+    parser.add_argument('--output-dir', type=str, default='../../../data/test/microwave/')
     parser.add_argument('--ntest', type=int, default=1, help='number of test samples (n_object_instants)')
     parser.add_argument('--ndof', type=int, default=1, help='how many degrees of freedom in the object class?')
     parser.add_argument('--batch', type=int, default=128, help='batch size')
@@ -44,10 +45,12 @@ if __name__ == "__main__":
 
     all_l_hat_err = torch.empty(0)
     all_m_err = torch.empty(0)
+    all_m_err_abs = torch.empty(0)
     all_q_err = torch.empty(0)
     all_d_err = torch.empty(0)
     all_l_hat_std = torch.empty(0)
     all_m_std = torch.empty(0)
+    all_m_std_abs = torch.empty(0)
     all_q_std = torch.empty(0)
     all_d_std = torch.empty(0)
 
@@ -62,15 +65,27 @@ if __name__ == "__main__":
                 labels = dual_quaternion_to_screw_batch_mode(labels)
 
             err = labels - y_pred
-            all_l_hat_err = torch.cat(
-                (all_l_hat_err, torch.mean(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
-            all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+            #all_l_hat_err = torch.cat(
+             #   (all_l_hat_err, torch.mean(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
+            #all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+            l_hat_std, l_hat_mean = torch.std_mean(torch.acos(torch.mul(labels[:,:,:3], y_pred[:, :, :3]).sum(dim=-1)/(torch.norm(labels[:,:,:3], dim=-1)*torch.norm(y_pred[:,:,:3], dim=-1))), dim=-1)
+            all_l_hat_err = torch.cat((all_l_hat_err, l_hat_mean.cpu()))
+
+            m_std, m_mean = torch.std_mean(torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1) , dim=-1)
+            m_std_abs, m_mean_abs = torch.std_mean(torch.abs(torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1)) , dim=-1)
+            all_m_err = torch.cat((all_m_err, m_mean.cpu()))
+            all_m_err_abs = torch.cat((all_m_err_abs, m_mean_abs.cpu()))
+
             all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
             all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
 
-            all_l_hat_std = torch.cat(
-                (all_l_hat_std, torch.std(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
-            all_m_std = torch.cat((all_m_std, torch.std(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+            #all_l_hat_std = torch.cat(
+            #    (all_l_hat_std, torch.std(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
+            #all_m_std = torch.cat((all_m_std, torch.std(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+            
+            all_l_hat_std = torch.cat((all_l_hat_std, l_hat_std.cpu()))
+            all_m_std = torch.cat((all_m_std, m_std.cpu()))
+            all_m_std_abs = torch.cat((all_m_std_abs, m_std_abs.cpu()))
             all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
             all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
@@ -78,30 +93,39 @@ if __name__ == "__main__":
     x_axis = np.arange(all_l_hat_err.size(0))
 
     fig = plt.figure(1)
-    plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), capsize=3., capthick=1.)
+    plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), marker='o', mfc='blue', ms=4., capsize=3., capthick=1.)
     plt.xlabel("Test object number")
-    plt.ylabel("Error")
-    plt.title("Test error in l_hat")
+    plt.ylabel("Angle error (rad)")
+    plt.title("Test error in screw axis orientation")
     plt.tight_layout()
-    plt.savefig('plots/' + args.model_name + '/l_hat_err.png')
+    plt.savefig(args.output_dir + '/l_hat_err_angle.png')
     plt.close(fig)
 
     fig = plt.figure(2)
-    plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), capsize=3., capthick=1.)
+    plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), marker='o', ms=4, mfc='blue', capsize=3., capthick=1.)
     plt.xlabel("Test object number")
     plt.ylabel("Error")
-    plt.title("Test error in m")
+    plt.title("Test error in norm(m)")
     plt.tight_layout()
-    plt.savefig('plots/' + args.model_name + '/m_err.png')
+    plt.savefig(args.output_dir + '/m_err_norm.png')
+    plt.close(fig)
+
+    fig = plt.figure(2)
+    plt.errorbar(x_axis, all_m_err_abs.numpy(), all_m_std_abs.numpy(), marker='o', mfc='blue', ms=4, capsize=3., capthick=1.)
+    plt.xlabel("Test object number")
+    plt.ylabel("Absolute Error")
+    plt.title("Absolute test error in norm(m)")
+    plt.tight_layout()
+    plt.savefig(args.output_dir + '/m_err_abs_norm.png')
     plt.close(fig)
 
     fig = plt.figure(3)
-    plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
+    plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(),  capsize=3., capthick=1.)
     plt.xlabel("Test object number")
     plt.ylabel("Error")
     plt.title("Test error in theta")
     plt.tight_layout()
-    plt.savefig('plots/' + args.model_name + '/theta_err.png')
+    plt.savefig(args.output_dir + '/theta_err.png')
     plt.close(fig)
 
     fig = plt.figure(4)
@@ -110,5 +134,5 @@ if __name__ == "__main__":
     plt.ylabel("Error")
     plt.title("Test error in d")
     plt.tight_layout()
-    plt.savefig('plots/' + args.model_name + '/d_err.png')
+    plt.savefig(args.output_dir + '/d_err.png')
     plt.close(fig)

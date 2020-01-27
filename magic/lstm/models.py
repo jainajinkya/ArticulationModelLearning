@@ -56,14 +56,23 @@ class KinematicLSTMv0(nn.Module):
         return x_rnn
 
 
-def articulation_lstm_loss(pred, target, wt_on_ax=0.5, wt_on_conf=0.):
+def articulation_lstm_loss(pred, target, extra_indiv_wts=[0.0, 0., 0.], wt_on_ax_std=1.0, wt_on_ortho=1.):
     pred = pred.view(pred.size(0), -1, 8)
     err = (pred - target)**2
     loss = torch.mean(err)
 
     # Penalize spread of screw axis
-    loss += wt_on_ax*(torch.mean(torch.std(err[:, :, :6], dim=1)))
+    loss += wt_on_ax_std*(torch.mean(err.std(dim=1)[:6]))
 
+    # Ensure orthogonality between l_hat and m
+    loss += wt_on_ortho*torch.mean(torch.abs(torch.sum(torch.mul(pred[:,:,:3], pred[:,:,3:6]), dim=-1)))
+
+    # Extra weight on axis errors 'l'
+    loss += torch.mean(extra_indiv_wts[0]*err[:, :, :3])
+
+    # Extra weight on axis errors 'm'
+    loss += torch.mean(extra_indiv_wts[1]*err[:, :, 3:6])
+    
     # Extra weight on configuration errors
-    loss += torch.mean(wt_on_conf*err[:, :, 6:])
+    loss += torch.mean(extra_indiv_wts[2]*err[:, :, 6:])
     return loss
