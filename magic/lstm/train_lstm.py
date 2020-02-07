@@ -1,9 +1,9 @@
 import argparse
 
 import torch
-from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
+from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
-from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0
+from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -29,13 +29,22 @@ if __name__ == "__main__":
     print(args)
     print('cuda?', torch.cuda.is_available())
 
-    trainset = ArticulationDataset(args.ntrain,
-                                   args.train_dir,
-                                   n_dof=args.ndof)
+    # trainset = ArticulationDataset(args.ntrain,
+    #                                args.train_dir,
+    #                                n_dof=args.ndof)
+    #
+    # testset = ArticulationDataset(args.ntest,
+    #                               args.test_dir,
+    #                               n_dof=args.ndof)
 
-    testset = ArticulationDataset(args.ntest,
-                                  args.test_dir,
-                                  n_dof=args.ndof)
+    '''Rigid Transform Datasets'''
+    trainset = RigidTransformDataset(args.ntrain,
+                                     args.train_dir,
+                                     n_dof=args.ndof)
+
+    testset = RigidTransformDataset(args.ntest,
+                                    args.test_dir,
+                                    n_dof=args.ndof)
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                              shuffle=True, num_workers=args.nwork,
@@ -46,8 +55,11 @@ if __name__ == "__main__":
                                               pin_memory=True)
 
     # init model
-    network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                              drop_p=args.drop_p, h_fc_dim=256, n_output=120)
+    # network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+    #                           drop_p=args.drop_p, h_fc_dim=256, n_output=120)
+
+    '''Rigid Transform Model'''
+    network = RigidTransformV0(drop_p=args.drop_p, n_output=8)
 
     # setup trainer
     if torch.cuda.is_available():
@@ -74,4 +86,3 @@ if __name__ == "__main__":
 
     # Test best model
     trainer.test_best_model(best_model, fname_suffix='_posttraining')
-

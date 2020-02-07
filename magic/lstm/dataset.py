@@ -70,3 +70,36 @@ class ArticulationDataset(Dataset):
                   'label': label}
 
         return sample
+
+
+## Rigid Transform
+class RigidTransformDataset(Dataset):
+    def __init__(self,
+                 ntrain,
+                 root_dir,
+                 n_dof):
+        super(RigidTransformDataset, self).__init__()
+
+        self.root_dir = root_dir
+        self.labels_data = None
+        self.length = ntrain
+        self.n_dof = n_dof
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, idx, imgs_per_object=16):
+        if self.labels_data is None:
+            self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data_2_imgs.hdf5'), 'r')
+
+        # Load depth image
+        depth_imgs = torch.tensor(self.labels_data['depth_imgs'][idx])
+        depth_imgs.unsqueeze_(1).float()
+        depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
+
+        # # Load labels
+        label = torch.from_numpy(self.labels_data['labels'][idx]).float()
+        sample = {'depth': depth_imgs,
+                  'label': label}
+
+        return sample
