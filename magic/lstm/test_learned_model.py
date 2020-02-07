@@ -3,8 +3,8 @@ import torch
 import argparse
 import matplotlib
 
-from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
-from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0
+from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset
+from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0
 from ArticulationModelLearning.magic.lstm.utils import dual_quaternion_to_screw_batch_mode
 
 matplotlib.use('Agg')
@@ -24,9 +24,12 @@ if __name__ == "__main__":
     parser.add_argument('--dual-quat', action='store_true', default=False, help='Dual quaternion representation or not')
     args = parser.parse_args()
 
-    testset = ArticulationDataset(args.ntest,
-                                  args.test_dir,
-                                  n_dof=args.ndof)
+    #testset = ArticulationDataset(args.ntest,
+    #                              args.test_dir,
+    #                              n_dof=args.ndof)
+    testset = RigidTransformDataset(args.ntest,
+                                    args.test_dir,
+                                    n_dof=args.ndof)
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                              shuffle=True, num_workers=args.nwork,
@@ -38,7 +41,8 @@ if __name__ == "__main__":
         device = torch.device('cpu')
 
     # load model
-    best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=120)
+    #best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=120)
+    best_model = RigidTransformV0(n_output=8)
     best_model.load_state_dict(torch.load(args.model_dir + args.model_name + '.net'))
     best_model.float().to(device)
     best_model.eval()
@@ -59,6 +63,7 @@ if __name__ == "__main__":
             depth, labels = X['depth'].to(device), X['label'].to(device)
             y_pred = best_model(depth)
             y_pred = y_pred.view(y_pred.size(0), -1, 8)
+            labels = labels.view(labels.size(0), -1, 8)
 
             if args.dual_quat:
                 y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
