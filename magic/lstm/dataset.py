@@ -1,4 +1,5 @@
 import os
+from itertools import permutations
 
 import dq3d
 import numpy as np
@@ -84,21 +85,35 @@ class RigidTransformDataset(Dataset):
         self.labels_data = None
         self.length = ntrain
         self.n_dof = n_dof
+        self.perm_idxs = list(permutations(range(16), r=2))
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, idx, imgs_per_object=16):
         if self.labels_data is None:
-            self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data_2_imgs.hdf5'), 'r')
+            self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
+
+        obj_idx = int(idx / 240)
+        obj_data_idx = self.perm_idxs[idx % 240]
+        obj_data = self.labels_data['obj_' + str(obj_idx).zfill(6)]
 
         # Load depth image
-        depth_imgs = torch.tensor(self.labels_data['depth_imgs'][idx])
+        depth_imgs = torch.tensor([obj_data['depth_imgs'][obj_data_idx[0]],
+                                   obj_data['depth_imgs'][obj_data_idx[1]]])
         depth_imgs.unsqueeze_(1).float()
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
         # # Load labels
-        label = torch.from_numpy(self.labels_data['labels'][idx]).float()
+        pt1 = obj_data['moving_frame_in_world'][obj_data_idx[0], :]
+        pt2 = obj_data['moving_frame_in_world'][obj_data_idx[1], :]
+        pt1_T_pt2 = change_frames(pt1, pt2)
+
+        # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
+        l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+                                                quat_in_wxyz=pt1_T_pt2[3:])
+
+        label = torch.from_numpy(np.concatenate((l_hat, m, [theta], [d]))).float()
         sample = {'depth': depth_imgs,
                   'label': label}
 
