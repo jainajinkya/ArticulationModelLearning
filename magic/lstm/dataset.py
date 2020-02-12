@@ -138,7 +138,7 @@ class RigidTransformDataset(Dataset):
         self.labels_data = None
         self.length = ntrain
         self.n_dof = n_dof
-        self.perm_idxs = list(permutations(range(16), r=2))
+        self.pair_idxs = list(combinations(range(16), r=2))
 
     def __len__(self):
         return self.length
@@ -147,8 +147,8 @@ class RigidTransformDataset(Dataset):
         if self.labels_data is None:
             self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
 
-        obj_idx = int(idx / 240)
-        obj_data_idx = self.perm_idxs[idx % 240]
+        obj_idx = int(idx / len(self.pair_idxs))
+        obj_data_idx = self.pair_idxs[idx % len(self.pair_idxs)]
         obj_data = self.labels_data['obj_' + str(obj_idx).zfill(6)]
 
         # Load depth image
