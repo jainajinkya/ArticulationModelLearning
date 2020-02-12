@@ -61,7 +61,7 @@ class KinematicLSTMv0(nn.Module):
 
 class KinematicLSTMv1(nn.Module):
     def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, drop_p=0.5,
-                 h_fc_dim=256, n_output=128):
+                 h_fc_dim=256, n_output=8):
         super(KinematicLSTMv1, self).__init__()
 
         self.lstm_input_dim = 1000
@@ -81,7 +81,8 @@ class KinematicLSTMv1(nn.Module):
         )
 
         self.fc1 = nn.Linear(3 * self.lstm_hidden_dim, self.h_fc_dim)
-        self.fc2 = nn.Linear(self.h_fc_dim, self.n_output)
+        self.fc2 = nn.Linear(self.h_fc_dim, 256)
+        self.fc3 = nn.Linear(256, self.n_output)
 
     def forward(self, X_3d):
         # X shape: Batch x Sequence x 3 Channels x img_dims
@@ -99,12 +100,12 @@ class KinematicLSTMv1(nn.Module):
         query_embeds = cnn_embed_seq[:, -2:, :]
         query_embeds = query_embeds.contiguous().view(query_embeds.size(0), -1)
 
-        cnn_embed_seq = cnn_embed_seq[:, :-2, :]
+        context_embeds = cnn_embed_seq[:, :-2, :]
 
         # run lstm on the embedding sequence
         self.LSTM.flatten_parameters()
 
-        RNN_out, (h_n, h_c) = self.LSTM(cnn_embed_seq, None)
+        RNN_out, (h_n, h_c) = self.LSTM(context_embeds, None)
         """ h_n shape (n_layers, batch, hidden_size), h_c shape (n_layers, batch, hidden_size) """
         """ None represents zero initial hidden state. RNN_out has shape=(batch, time_step, output_size) """
 
@@ -113,6 +114,8 @@ class KinematicLSTMv1(nn.Module):
         x_rnn = self.fc1(x_rnn)
         x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc2(x_rnn)
+        x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
+        x_rnn = self.fc3(x_rnn)
         return x_rnn
 
 
