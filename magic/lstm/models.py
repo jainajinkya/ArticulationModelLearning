@@ -183,7 +183,7 @@ def articulation_lstm_loss(pred, target, wt_on_ax_std=1.0, wt_on_ortho=1., extra
     return loss
 
 
-def articulation_lstm_loss_RT(pred, target, wt_on_ortho=1., extra_indiv_wts=None):
+def articulation_lstm_loss_RT(pred, target, wt_on_ortho=0., extra_indiv_wts=None):
     err = (pred - target) ** 2
     loss = torch.mean(err)
 
