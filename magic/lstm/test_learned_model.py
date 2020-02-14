@@ -47,7 +47,7 @@ if __name__ == "__main__":
                                         args.test_dir,
                                         n_dof=args.ndof)
         # load model
-        best_model = RigidTransformV0(n_output=120)
+        best_model = RigidTransformV0(n_output=8)
         best_model.load_state_dict(torch.load(args.model_dir + args.model_name + '.net'))
         best_model.float().to(device)
         best_model.eval()
@@ -57,7 +57,7 @@ if __name__ == "__main__":
                                         args.test_dir,
                                         n_dof=args.ndof)
         # load model
-        best_model = KinematicLSTMv1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=120)
+        best_model = KinematicLSTMv1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
         best_model.load_state_dict(torch.load(args.model_dir + args.model_name + '.net'))
         best_model.float().to(device)
         best_model.eval()
