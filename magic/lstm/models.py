@@ -71,6 +71,8 @@ class KinematicLSTMv1(nn.Module):
 
         self.resnet = models.resnet18()
 
+        self.label_mlp1 = nn.Linear(self.lstm_input_dim + 8, self.lstm_hidden_dim)
+
         self.LSTM = nn.LSTM(
             input_size=self.lstm_input_dim,
             hidden_size=self.lstm_hidden_dim,
@@ -79,12 +81,13 @@ class KinematicLSTMv1(nn.Module):
         )
 
         # self.fc1 = nn.Linear((16 + 2) * self.lstm_hidden_dim, self.h_fc_dim)
-        self.fc1 = nn.Linear((3 + 2) * self.lstm_hidden_dim, self.h_fc_dim)
+        self.fc1 = nn.Linear(3*self.lstm_hidden_dim, self.h_fc_dim)
         self.fc2 = nn.Linear(self.h_fc_dim, 1000)
         self.fc3 = nn.Linear(1000, self.n_output)
 
-    def forward(self, X_3d):
+    def forward(self, X_3d, Y_in):
         # X shape: Batch x Sequence x 3 Channels x img_dims
+        # Y_in: Batch x Sequence x 8
         # Run resnet sequentially on the data to generate embedding sequence
         cnn_embed_seq = []
         for t in range(X_3d.size(1)):
@@ -99,7 +102,12 @@ class KinematicLSTMv1(nn.Module):
         context_embeds = cnn_embed_seq[:, :-2, :]
 
         query_embeds = cnn_embed_seq[:, -2:, :]
-        # query_embeds = query_embeds.contiguous().view(query_embeds.size(0), -1)
+        query_embeds = query_embeds.contiguous().view(query_embeds.size(0), -1)
+
+        # Combine context labels and context_embeds
+        context_embeds = torch.cat((context_embeds, Y_in), dim=-1)
+        context_embeds = self.label_mlp1(context_embeds)
+        context_embeds = F.relu(context_embeds)
 
         # run lstm on the embedding sequence
         self.LSTM.flatten_parameters()
@@ -112,9 +120,11 @@ class KinematicLSTMv1(nn.Module):
         x_rnn = torch.cat((RNN_out[:, -1, :], query_embeds), dim=1)
         # x_rnn = torch.cat((RNN_out, query_embeds), dim=1).view(RNN_out.size(0), -1)
         x_rnn = self.fc1(x_rnn)
-        x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
+        x_rnn = F.relu(x_rnn)
+        # x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc2(x_rnn)
-        x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
+        x_rnn = F.relu(x_rnn)
+        # x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc3(x_rnn)
         return x_rnn
 
@@ -139,7 +149,7 @@ class RigidTransformV0(nn.Module):
         cnn_embed_seq = []
         for t in range(X_3d.size(1)):
             X = self.resnet(X_3d[:, t, :, :, :])
-            X = F.dropout(X, p=self.drop_p, training=self.training)
+            # X = F.dropout(X, p=self.drop_p, training=self.training)
             cnn_embed_seq.append(X)
 
         # swap time and sample dim such that result has (sample dim, time dim, CNN latent dim)

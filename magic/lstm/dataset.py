@@ -72,60 +72,69 @@ class ArticulationDataset(Dataset):
 
         return sample
 
-
-### LSTM with Data Augmentation
-class ArticulationDatasetV2(Dataset):
-    def __init__(self,
-                 ntrain,
-                 root_dir,
-                 n_dof):
-        super(ArticulationDatasetV2, self).__init__()
-
-        self.root_dir = root_dir
-        self.labels_data = None
-        self.length = ntrain
-        self.n_dof = n_dof
-        self.pair_idxs = all_combinations(n=16)  # no. of images available
-
-    def __len__(self):
-        return self.length
-
-    def __getitem__(self, idx):
-        if self.labels_data is None:
-            self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
-
-        obj_idx = int(idx / len(self.pair_idxs))
-        pair_idx = self.pair_idxs[idx % len(self.pair_idxs)]
-
-        # One Sample for us corresponds to one instantiation of an object type
-        obj_data = self.labels_data['obj_' + str(obj_idx).zfill(6)]
-
-        # Load depth images
-        depth_imgs = torch.empty()
-        for idx in pair_idx:
-            depth_imgs = torch.cat((depth_imgs, torch.from_numpy(obj_data['depth_imgs'][idx])))
-
-        depth_imgs.unsqueeze_(1).float()
-        depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
-
-        # Load labels
-        labels = []
-
-        # for idx in pair_idx:
-
-        pt1 = obj_data['moving_frame_in_world'][pair_idx[0], :]
-        pt2 = obj_data['moving_frame_in_world'][pair_idx[1], :]
-        pt1_T_pt2 = change_frames(pt1, pt2)
-
-        # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
-        l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
-                                                quat_in_wxyz=pt1_T_pt2[3:])
-
-        label = torch.from_numpy(np.concatenate((l_hat, m, [theta], [d]))).float()
-        sample = {'depth': depth_imgs,
-                  'label': label}
-
-        return sample
+#
+# ### LSTM with Data Augmentation
+# class ArticulationDatasetV2(Dataset):
+#     def __init__(self,
+#                  ntrain,
+#                  root_dir,
+#                  n_dof):
+#         super(ArticulationDatasetV2, self).__init__()
+#
+#         self.root_dir = root_dir
+#         self.labels_data = None
+#         self.length = ntrain
+#         self.n_dof = n_dof
+#         self.pair_idxs = all_combinations(n=8)  # no. of total images available = 16
+#         self.img_size = (108, 192)
+#
+#     def find_dense_idx(self, s_idx):
+#         return 2*s_idx
+#
+#     def __len__(self):
+#         return self.length
+#
+#     def __getitem__(self, idx):
+#         if self.labels_data is None:
+#             self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
+#
+#         obj_idx = int(idx / len(self.pair_idxs))
+#         pair_idx = self.pair_idxs[idx % len(self.pair_idxs)]
+#
+#         # Convert to dense idxs
+#         pair_idx = [self.find_dense_idx(idx) for idx in pair_idx]
+#
+#         # One Sample for us corresponds to one instantiation of an object type
+#         obj_data = self.labels_data['obj_' + str(obj_idx).zfill(6)]
+#
+#         # Load depth images
+#         depth_imgs = torch.empty(size=(len(pair_idx), self.img_size[0], self.img_size[1]))
+#         for i, idx in enumerate(pair_idx):
+#             depth_imgs[i, :, :] = torch.from_numpy(obj_data['depth_imgs'][idx])
+#
+#         depth_imgs.unsqueeze_(1).float()
+#         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
+#
+#         # Load labels
+#         label = []
+#
+#         for i in range(len(pair_idx)-1):
+#             pt1 = obj_data['moving_frame_in_world'][pair_idx[i], :]
+#             pt2 = obj_data['moving_frame_in_world'][pair_idx[i+1], :]
+#             pt1_T_pt2 = change_frames(pt1, pt2)
+#
+#             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
+#             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+#                                                     quat_in_wxyz=pt1_T_pt2[3:])
+#
+#             label.append(np.concatenate((l_hat, m, [theta], [d])))
+#
+#         label = torch.tensor(label)
+#
+#         sample = {'depth': depth_imgs,
+#                   'label': label}
+#
+#         return sample
 
 
 ### LSTM + 2 images
@@ -164,8 +173,24 @@ class ArticulationDatasetV1(Dataset):
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
         # Load labels
-        pt1 = obj_data['moving_frame_in_world'][pair_idx[0], :]
-        pt2 = obj_data['moving_frame_in_world'][pair_idx[1], :]
+        moving_body_poses = obj_data['moving_frame_in_world']
+
+        all_labels = np.empty((len(moving_body_poses) - 1, 8))
+        for i in range(len(moving_body_poses) - 1):
+            pt1 = moving_body_poses[i, :]
+            pt2 = moving_body_poses[i + 1, :]
+            pt1_T_pt2 = change_frames(pt1, pt2)
+
+            # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
+            l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+                                                    quat_in_wxyz=pt1_T_pt2[3:])
+            all_labels[i, :] = np.concatenate((l_hat, m, [theta], [d]))
+
+        all_labels = torch.from_numpy(all_labels).float()
+
+        # Query label
+        pt1 = moving_body_poses[pair_idx[0], :]
+        pt2 = moving_body_poses[pair_idx[1], :]
         pt1_T_pt2 = change_frames(pt1, pt2)
 
         # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
@@ -174,6 +199,7 @@ class ArticulationDatasetV1(Dataset):
 
         label = torch.from_numpy(np.concatenate((l_hat, m, [theta], [d]))).float()
         sample = {'depth': depth_imgs,
+                  'all_labels': all_labels,
                   'label': label}
 
         return sample
