@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser.add_argument('--model-dir', type=str, default='../../models/')
     parser.add_argument('--model-name', type=str, default='test_lstm')
     parser.add_argument('--test-dir', type=str, default='../../../data/test/microwave/')
-    parser.add_argument('--output-dir', type=str, default='../../../data/test/microwave/')
+    parser.add_argument('--output-dir', type=str, default='../../plots/')
     parser.add_argument('--ntest', type=int, default=1, help='number of test samples (n_object_instants)')
     parser.add_argument('--ndof', type=int, default=1, help='how many degrees of freedom in the object class?')
     parser.add_argument('--batch', type=int, default=128, help='batch size')
@@ -120,6 +120,7 @@ if __name__ == "__main__":
             all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
     # Plot variation of screw axis
+    output_dir = args.output_dir + '/' + args.model_name
     x_axis = np.arange(all_l_hat_err.size(0))
 
     fig = plt.figure(1)
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     plt.ylabel("Angle error (rad)")
     plt.title("Test error in screw axis orientation")
     plt.tight_layout()
-    plt.savefig(args.output_dir + '/l_hat_err_angle.png')
+    plt.savefig(output_dir + '/l_hat_err_angle.png')
     plt.close(fig)
 
     fig = plt.figure(2)
@@ -138,7 +139,7 @@ if __name__ == "__main__":
     plt.ylabel("Error")
     plt.title("Test error in norm(m)")
     plt.tight_layout()
-    plt.savefig(args.output_dir + '/m_err_norm.png')
+    plt.savefig(output_dir + '/m_err_norm.png')
     plt.close(fig)
 
     fig = plt.figure(2)
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     plt.ylabel("Absolute Error")
     plt.title("Absolute test error in norm(m)")
     plt.tight_layout()
-    plt.savefig(args.output_dir + '/m_err_abs_norm.png')
+    plt.savefig(output_dir + '/m_err_abs_norm.png')
     plt.close(fig)
 
     fig = plt.figure(3)
@@ -157,7 +158,7 @@ if __name__ == "__main__":
     plt.ylabel("Error")
     plt.title("Test error in theta")
     plt.tight_layout()
-    plt.savefig(args.output_dir + '/theta_err.png')
+    plt.savefig(output_dir + '/theta_err.png')
     plt.close(fig)
 
     fig = plt.figure(4)
@@ -166,5 +167,5 @@ if __name__ == "__main__":
     plt.ylabel("Error")
     plt.title("Test error in d")
     plt.tight_layout()
-    plt.savefig(args.output_dir + '/d_err.png')
+    plt.savefig(output_dir + '/d_err.png')
     plt.close(fig)
