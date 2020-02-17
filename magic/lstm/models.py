@@ -57,11 +57,9 @@ class KinematicLSTMv0(nn.Module):
 
 
 """ LSTM + 2 imgs"""
-
-
 class KinematicLSTMv1(nn.Module):
     def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, drop_p=0.5,
-                 h_fc_dim=256, n_output=8):
+                 h_fc_dim=1000, n_output=8):
         super(KinematicLSTMv1, self).__init__()
 
         self.lstm_input_dim = 1000
@@ -80,9 +78,10 @@ class KinematicLSTMv1(nn.Module):
             batch_first=True,
         )
 
-        self.fc1 = nn.Linear(3 * self.lstm_hidden_dim, self.h_fc_dim)
-        self.fc2 = nn.Linear(self.h_fc_dim, 256)
-        self.fc3 = nn.Linear(256, self.n_output)
+        # self.fc1 = nn.Linear((16 + 2) * self.lstm_hidden_dim, self.h_fc_dim)
+        self.fc1 = nn.Linear((3 + 2) * self.lstm_hidden_dim, self.h_fc_dim)
+        self.fc2 = nn.Linear(self.h_fc_dim, 1000)
+        self.fc3 = nn.Linear(1000, self.n_output)
 
     def forward(self, X_3d):
         # X shape: Batch x Sequence x 3 Channels x img_dims
@@ -97,10 +96,10 @@ class KinematicLSTMv1(nn.Module):
         cnn_embed_seq = torch.stack(cnn_embed_seq, dim=0).transpose_(0, 1)
 
         # Pass all elements of cnn_embed_seq except last 2 through lstm
-        query_embeds = cnn_embed_seq[:, -2:, :]
-        query_embeds = query_embeds.contiguous().view(query_embeds.size(0), -1)
-
         context_embeds = cnn_embed_seq[:, :-2, :]
+
+        query_embeds = cnn_embed_seq[:, -2:, :]
+        # query_embeds = query_embeds.contiguous().view(query_embeds.size(0), -1)
 
         # run lstm on the embedding sequence
         self.LSTM.flatten_parameters()
@@ -111,6 +110,7 @@ class KinematicLSTMv1(nn.Module):
 
         # FC layers
         x_rnn = torch.cat((RNN_out[:, -1, :], query_embeds), dim=1)
+        # x_rnn = torch.cat((RNN_out, query_embeds), dim=1).view(RNN_out.size(0), -1)
         x_rnn = self.fc1(x_rnn)
         x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc2(x_rnn)
@@ -150,9 +150,11 @@ class RigidTransformV0(nn.Module):
 
         # FC layers
         x_rnn = self.fc1(cnn_embed_seq)
-        x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
+        x_rnn = F.relu(x_rnn)
+        # x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc2(x_rnn)
-        x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
+        x_rnn = F.relu(x_rnn)
+        # x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc3(x_rnn)
         return x_rnn
 
