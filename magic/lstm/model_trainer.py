@@ -76,9 +76,11 @@ class ModelTrainer(object):
         batches_per_dataset = len(self.trainloader.dataset) / self.trainloader.batch_size
         for i, X in enumerate(self.trainloader):
             self.optimizer.zero_grad()
-            depth, labels = X['depth'].to(self.device), X['label'].to(self.device)
+            depth, all_labels, labels = X['depth'].to(self.device), \
+                                        X['all_labels'].to(self.device), \
+                                        X['label'].to(self.device)
 
-            y_pred = self.model(depth)
+            y_pred = self.model(depth, all_labels)
             loss = self.criterion(y_pred, labels)
             if loss.data == -float('inf'):
                 print('inf loss caught, not backpropping')
@@ -100,8 +102,10 @@ class ModelTrainer(object):
         batches_per_dataset = len(self.testloader.dataset) / self.testloader.batch_size
         with torch.no_grad():
             for i, X in enumerate(self.testloader):
-                depth, labels = X['depth'].to(self.device), X['label'].to(self.device)
-                y_pred = self.model(depth)
+                depth, all_labels, labels = X['depth'].to(self.device),\
+                                            X['all_labels'].to(self.device), \
+                                            X['label'].to(self.device)
+                y_pred = self.model(depth, all_labels)
                 loss = self.criterion(y_pred, labels)
                 running_loss += loss.item()
 

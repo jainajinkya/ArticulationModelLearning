@@ -79,8 +79,15 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         for X in testloader:
-            depth, labels = X['depth'].to(device), X['label'].to(device)
-            y_pred = best_model(depth)
+            if args.model_type == 'lstm_rt':
+                depth, all_labels, labels = X['depth'].to(device), \
+                                            X['all_labels'].to(device), \
+                                            X['label'].to(device)
+                y_pred = best_model(depth, all_labels)
+            else:
+                depth, labels = X['depth'].to(device), X['label'].to(device)
+                y_pred = best_model(depth)
+
             y_pred = y_pred.view(y_pred.size(0), -1, 8)
 
             if args.model_type in ['rt', 'lstm_rt']:

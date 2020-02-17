@@ -2,7 +2,7 @@ import argparse
 
 import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
-    ArticulationDatasetV1, ArticulationDatasetV2
+    ArticulationDatasetV1
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0, KinematicLSTMv1
 
@@ -48,18 +48,18 @@ if __name__ == "__main__":
         network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
                                   drop_p=args.drop_p, h_fc_dim=256, n_output=120)
 
-    elif args.model_type == 'lstm_aug':
-        trainset = ArticulationDatasetV2(ntrain,
-                                         args.train_dir,
-                                         n_dof=args.ndof)
-
-        testset = ArticulationDatasetV2(ntest,
-                                        args.test_dir,
-                                        n_dof=args.ndof)
-
-        # init model
-        network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                                  drop_p=args.drop_p, h_fc_dim=256, n_output=120)
+    # elif args.model_type == 'lstm_aug':
+    #     trainset = ArticulationDatasetV2(ntrain,
+    #                                      args.train_dir,
+    #                                      n_dof=args.ndof)
+    #
+    #     testset = ArticulationDatasetV2(ntest,
+    #                                     args.test_dir,
+    #                                     n_dof=args.ndof)
+    #
+    #     # init model
+    #     network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+    #                               drop_p=args.drop_p, h_fc_dim=256, n_output=120)
 
     elif args.model_type == 'rt':
         '''Rigid Transform Datasets'''
