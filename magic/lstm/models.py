@@ -130,8 +130,8 @@ class RigidTransformV0(nn.Module):
         self.resnet = models.resnet18()
 
         self.fc1 = nn.Linear(2000, 1000)
-        self.fc2 = nn.Linear(1000, 256)
-        self.fc3 = nn.Linear(256, self.n_output)
+        self.fc2 = nn.Linear(1000, 512)
+        self.fc3 = nn.Linear(512, self.n_output)
 
     def forward(self, X_3d):
         # X shape: Batch x 2images x 3 Channels x img_dims
@@ -142,8 +142,7 @@ class RigidTransformV0(nn.Module):
             X = F.dropout(X, p=self.drop_p, training=self.training)
             cnn_embed_seq.append(X)
 
-        # import pdb; pdb.set_trace()
-        # swap time and sample dim such that (sample dim, time dim, CNN latent dim)
+        # swap time and sample dim such that result has (sample dim, time dim, CNN latent dim)
         cnn_embed_seq = torch.stack(cnn_embed_seq, dim=0).transpose_(0, 1)
 
         # stacking time dim in a single tensor

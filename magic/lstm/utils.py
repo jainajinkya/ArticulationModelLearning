@@ -1,3 +1,5 @@
+from itertools import combinations
+
 import numpy as np
 import torch
 import transforms3d as tf3d
@@ -120,3 +122,10 @@ def interpret_label(label):
     #         'reference_frame': ref_frame,
     #         'configs': configs,
     #         'params': params}
+
+
+def all_combinations(n):
+        idxs = []
+        for r in np.arange(2, n+1):
+            idxs.append(list(combinations(range(n), r=r)))
+        return [item for sublist in idxs for item in sublist]

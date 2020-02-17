@@ -14,6 +14,7 @@ if __name__ == "__main__":
     parser.add_argument('--ntrain', type=int, default=1,
                         help='number of total training samples (n_object_instants)')
     parser.add_argument('--ntest', type=int, default=1, help='number of test samples (n_object_instants)')
+    parser.add_argument('--aug-multiplier', type=int, default=120, help='Multiplier for data augmentation')
     parser.add_argument('--epochs', type=int, default=10, help='number of iterations through data')
     parser.add_argument('--batch', type=int, default=128, help='batch size')
     parser.add_argument('--nwork', type=int, default=8, help='num_workers')
@@ -31,12 +32,15 @@ if __name__ == "__main__":
     print(args)
     print('cuda?', torch.cuda.is_available())
 
+    ntrain = args.ntrain * args.aug_multiplier
+    ntest = args.ntest * args.aug_multiplier
+
     if args.model_type == 'lstm':
-        trainset = ArticulationDataset(args.ntrain,
+        trainset = ArticulationDataset(ntrain,
                                        args.train_dir,
                                        n_dof=args.ndof)
 
-        testset = ArticulationDataset(args.ntest,
+        testset = ArticulationDataset(ntest,
                                       args.test_dir,
                                       n_dof=args.ndof)
 
@@ -46,11 +50,11 @@ if __name__ == "__main__":
 
     elif args.model_type == 'rt':
         '''Rigid Transform Datasets'''
-        trainset = RigidTransformDataset(args.ntrain,
+        trainset = RigidTransformDataset(ntrain,
                                          args.train_dir,
                                          n_dof=args.ndof)
 
-        testset = RigidTransformDataset(args.ntest,
+        testset = RigidTransformDataset(ntest,
                                         args.test_dir,
                                         n_dof=args.ndof)
 
@@ -58,11 +62,11 @@ if __name__ == "__main__":
 
     elif args.model_type == 'lstm_rt':
         ## Sequence and 2 images
-        trainset = ArticulationDatasetV1(args.ntrain,
+        trainset = ArticulationDatasetV1(ntrain,
                                        args.train_dir,
                                        n_dof=args.ndof)
 
-        testset = ArticulationDatasetV1(args.ntest,
+        testset = ArticulationDatasetV1(ntest,
                                       args.test_dir,
                                       n_dof=args.ndof)
 
