@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument('--device', type=int, default=0, help='cuda device')
     parser.add_argument('--model-type', type=str, default='lstm', help='lstm, rt, lstm_rt, lst_aug')
     parser.add_argument('--load-wts', action='store_true', default=False, help='Should load model wts from prior run?')
-    parser.add_argument('--wts-path', type=str, default='models/', help='Dir of saved model wts')
+    parser.add_argument('--wts-dir', type=str, default='models/', help='Dir of saved model wts')
     parser.add_argument('--prior-wts', type=str, default='test', help='Name of saved model wts')
     args = parser.parse_args()
 
