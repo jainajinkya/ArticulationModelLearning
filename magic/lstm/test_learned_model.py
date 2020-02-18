@@ -127,7 +127,7 @@ if __name__ == "__main__":
             all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
     # Plot variation of screw axis
-    output_dir = args.output_dir + '/' + args.model_name
+    output_dir = args.output_dir + args.model_name
     x_axis = np.arange(all_l_hat_err.size(0))
 
     fig = plt.figure(1)
