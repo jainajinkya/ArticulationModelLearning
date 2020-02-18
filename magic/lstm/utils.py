@@ -1,9 +1,12 @@
 from itertools import combinations
 
+import h5py
 import numpy as np
 import torch
 import transforms3d as tf3d
 import dq3d
+
+from SyntheticArticulatedData.generation.utils import change_frames
 
 
 def dual_quaternion_to_vecQuat_form(dq):
@@ -125,7 +128,32 @@ def interpret_label(label):
 
 
 def all_combinations(n):
-        idxs = []
-        for r in np.arange(2, n+1):
-            idxs.append(list(combinations(range(n), r=r)))
-        return [item for sublist in idxs for item in sublist]
+    idxs = []
+    for r in np.arange(2, n + 1):
+        idxs.append(list(combinations(range(n), r=r)))
+    return [item for sublist in idxs for item in sublist]
+
+
+def find_all_labels(moving_body_poses):
+    all_labels = np.empty((len(moving_body_poses), 8))
+    for i in range(len(moving_body_poses) - 1):
+        pt1 = moving_body_poses[i, :]
+        pt2 = moving_body_poses[i + 1, :]
+        pt1_T_pt2 = change_frames(pt1, pt2)
+        l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+                                                quat_in_wxyz=pt1_T_pt2[3:])
+        all_labels[i + 1, :] = np.concatenate((l_hat, m, [theta], [d]))
+
+    # Adding zeros for first image as padding for correct shapes
+    all_labels[0, :] = np.concatenate((all_labels[1, :6], [0.], [0.]))
+    return all_labels
+
+
+def append_all_labels_to_dataset(filename):
+    all_data = h5py.File(filename, 'r+')
+    for key in all_data.keys():
+        obj_data = all_data[key]
+        moving_body_poses = obj_data['moving_frame_in_world']
+        obj_data['all_transforms'] = find_all_labels(moving_body_poses)
+    all_data.close()
+    print("Added all transforms to the dataset.")

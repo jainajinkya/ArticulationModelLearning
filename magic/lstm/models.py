@@ -82,8 +82,8 @@ class KinematicLSTMv1(nn.Module):
 
         # self.fc1 = nn.Linear((16 + 2) * self.lstm_hidden_dim, self.h_fc_dim)
         self.fc1 = nn.Linear(3*self.lstm_hidden_dim, self.h_fc_dim)
-        self.fc2 = nn.Linear(self.h_fc_dim, 1000)
-        self.fc3 = nn.Linear(1000, self.n_output)
+        self.fc2 = nn.Linear(self.h_fc_dim, 256)
+        self.fc3 = nn.Linear(256, self.n_output)
 
     def forward(self, X_3d, Y_in):
         # X shape: Batch x Sequence x 3 Channels x img_dims
@@ -100,7 +100,6 @@ class KinematicLSTMv1(nn.Module):
 
         # Pass all elements of cnn_embed_seq except last 2 through lstm
         context_embeds = cnn_embed_seq[:, :-2, :]
-
         query_embeds = cnn_embed_seq[:, -2:, :]
         query_embeds = query_embeds.contiguous().view(query_embeds.size(0), -1)
 

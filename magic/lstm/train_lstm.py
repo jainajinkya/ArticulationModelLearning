@@ -10,8 +10,8 @@ from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTr
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
     parser.add_argument('--name', type=str, help='jobname', default='test')
-    parser.add_argument('--train-dir', type=str, default='../../../data/test/microwave/')
-    parser.add_argument('--test-dir', type=str, default='../../../data/test/microwave/')
+    parser.add_argument('--train-dir', type=str, default='../data/test/microwave/')
+    parser.add_argument('--test-dir', type=str, default='../data/test/microwave/')
     parser.add_argument('--ntrain', type=int, default=1,
                         help='number of total training samples (n_object_instants)')
     parser.add_argument('--ntest', type=int, default=1, help='number of test samples (n_object_instants)')
@@ -28,6 +28,9 @@ if __name__ == "__main__":
     parser.add_argument('--drop_p', type=float, default=0.5, help='dropout prob')
     parser.add_argument('--device', type=int, default=0, help='cuda device')
     parser.add_argument('--model-type', type=str, default='lstm', help='lstm, rt, lstm_rt, lst_aug')
+    parser.add_argument('--load-wts', action='store_true', default=False, help='Should load model wts from prior run?')
+    parser.add_argument('--wts-path', type=str, default='models/', help='Dir of saved model wts')
+    parser.add_argument('--prior-wts', type=str, default='test', help='Name of saved model wts')
     args = parser.parse_args()
 
     print(args)
@@ -99,6 +102,10 @@ if __name__ == "__main__":
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch,
                                               shuffle=True, num_workers=args.nwork,
                                               pin_memory=True)
+
+    # Load Saved wts
+    if args.load_wts:
+        network.load_state_dict(torch.load(args.wts_dir + args.prior_wts + '.net'))
 
     # setup trainer
     if torch.cuda.is_available():
