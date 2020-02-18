@@ -149,7 +149,7 @@ class RigidTransformV0(nn.Module):
         cnn_embed_seq = []
         for t in range(X_3d.size(1)):
             X = self.resnet(X_3d[:, t, :, :, :])
-            # X = F.dropout(X, p=self.drop_p, training=self.training)
+            X = F.dropout(X, p=self.drop_p, training=self.training)
             cnn_embed_seq.append(X)
 
         # swap time and sample dim such that result has (sample dim, time dim, CNN latent dim)
@@ -161,10 +161,8 @@ class RigidTransformV0(nn.Module):
         # FC layers
         x_rnn = self.fc1(cnn_embed_seq)
         x_rnn = F.relu(x_rnn)
-        # x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc2(x_rnn)
         x_rnn = F.relu(x_rnn)
-        # x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc3(x_rnn)
         return x_rnn
 

@@ -4,7 +4,8 @@ import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
     ArticulationDatasetV1
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
-from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0, KinematicLSTMv1
+from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0, KinematicLSTMv1, \
+    articulation_lstm_loss, articulation_lstm_loss_RT
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -43,6 +44,7 @@ if __name__ == "__main__":
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
                                       n_dof=args.ndof)
+        loss_fn = articulation_lstm_loss
 
         # init model
         network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
@@ -71,6 +73,8 @@ if __name__ == "__main__":
                                         args.test_dir,
                                         n_dof=args.ndof)
 
+        loss_fn = articulation_lstm_loss_RT
+
         network = RigidTransformV0(drop_p=args.drop_p, n_output=8)
 
     elif args.model_type == 'lstm_rt':
@@ -82,6 +86,8 @@ if __name__ == "__main__":
         testset = ArticulationDatasetV1(ntest,
                                         args.test_dir,
                                         n_dof=args.ndof)
+
+        loss_fn = articulation_lstm_loss_RT
 
         network = KinematicLSTMv1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
                                   drop_p=args.drop_p, h_fc_dim=256, n_output=8)
@@ -107,6 +113,7 @@ if __name__ == "__main__":
                            train_loader=trainloader,
                            test_loader=testloader,
                            optimizer=optimizer,
+                           criterion=loss_fn,
                            epochs=args.epochs,
                            name=args.name,
                            test_freq=args.test_freq,
@@ -117,5 +124,5 @@ if __name__ == "__main__":
     # train
     best_model = trainer.train()
 
-    # Test best model
+    #Test best model
     trainer.test_best_model(best_model, fname_suffix='_posttraining')

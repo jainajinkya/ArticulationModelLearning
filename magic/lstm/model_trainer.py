@@ -9,8 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
-from ArticulationModelLearning.magic.lstm.models import articulation_lstm_loss, articulation_lstm_loss_RT
-from ArticulationModelLearning.magic.lstm.utils import interpret_label, dual_quaternion_to_screw_batch_mode
+from ArticulationModelLearning.magic.lstm.utils import dual_quaternion_to_screw_batch_mode
 
 
 class ModelTrainer(object):
@@ -19,6 +18,7 @@ class ModelTrainer(object):
                  train_loader,
                  test_loader,
                  optimizer,
+                 criterion,
                  epochs,
                  name,
                  test_freq,
@@ -30,8 +30,7 @@ class ModelTrainer(object):
         self.trainloader = train_loader
         self.testloader = test_loader
         self.optimizer = optimizer
-        # self.criterion = articulation_lstm_loss
-        self.criterion = articulation_lstm_loss_RT
+        self.criterion = criterion
         self.epochs = epochs
         self.name = name
         self.test_freq = test_freq

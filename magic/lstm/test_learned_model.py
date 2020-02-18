@@ -18,6 +18,7 @@ if __name__ == "__main__":
     parser.add_argument('--test-dir', type=str, default='../../../data/test/microwave/')
     parser.add_argument('--output-dir', type=str, default='../../plots/')
     parser.add_argument('--ntest', type=int, default=1, help='number of test samples (n_object_instants)')
+    parser.add_argument('--aug-multi', type=int, default=120, help='Multiplier for data augmentation')
     parser.add_argument('--ndof', type=int, default=1, help='how many degrees of freedom in the object class?')
     parser.add_argument('--batch', type=int, default=128, help='batch size')
     parser.add_argument('--nwork', type=int, default=8, help='num_workers')
@@ -27,13 +28,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    ntest = args.ntest * args.aug_multi
+
     if torch.cuda.is_available():
         device = torch.device(args.device)
     else:
         device = torch.device('cpu')
 
     if args.model_type == 'lstm':
-        testset = ArticulationDataset(args.ntest,
+        testset = ArticulationDataset(ntest,
                                       args.test_dir,
                                       n_dof=args.ndof)
         # load model
@@ -43,7 +46,7 @@ if __name__ == "__main__":
         best_model.eval()
 
     elif args.model_type == 'rt':
-        testset = RigidTransformDataset(args.ntest,
+        testset = RigidTransformDataset(ntest,
                                         args.test_dir,
                                         n_dof=args.ndof)
         # load model
@@ -53,7 +56,7 @@ if __name__ == "__main__":
         best_model.eval()
 
     elif args.model_type == 'lstm_rt':
-        testset = ArticulationDatasetV1(args.ntest,
+        testset = ArticulationDatasetV1(ntest,
                                         args.test_dir,
                                         n_dof=args.ndof)
         # load model
@@ -103,7 +106,7 @@ if __name__ == "__main__":
             # all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
             l_hat_std, l_hat_mean = torch.std_mean(torch.acos(
                 torch.mul(labels[:, :, :3], y_pred[:, :, :3]).sum(dim=-1) / (
-                            torch.norm(labels[:, :, :3], dim=-1) * torch.norm(y_pred[:, :, :3], dim=-1))), dim=-1)
+                        torch.norm(labels[:, :, :3], dim=-1) * torch.norm(y_pred[:, :, :3], dim=-1))), dim=-1)
             all_l_hat_err = torch.cat((all_l_hat_err, l_hat_mean.cpu()))
 
             m_std, m_mean = torch.std_mean(
