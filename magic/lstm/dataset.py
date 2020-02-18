@@ -175,21 +175,22 @@ class ArticulationDatasetV1(Dataset):
         # Load labels
         moving_body_poses = obj_data['moving_frame_in_world']
 
-        all_labels = np.empty((len(moving_body_poses), 8))
-        for i in range(len(moving_body_poses) - 1):
-            pt1 = moving_body_poses[i, :]
-            pt2 = moving_body_poses[i + 1, :]
-            pt1_T_pt2 = change_frames(pt1, pt2)
+        # all_labels = np.empty((len(moving_body_poses), 8))
+        # for i in range(len(moving_body_poses) - 1):
+        #     pt1 = moving_body_poses[i, :]
+        #     pt2 = moving_body_poses[i + 1, :]
+        #     pt1_T_pt2 = change_frames(pt1, pt2)
+        #
+        #     # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
+        #     l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+        #                                             quat_in_wxyz=pt1_T_pt2[3:])
+        #     all_labels[i+1, :] = np.concatenate((l_hat, m, [theta], [d]))
+        #
+        # # Adding zeros for first image as padding for correct shapes
+        # all_labels[0, :] = np.concatenate((all_labels[1, :6], [0.], [0.]))
+        # all_labels = torch.from_numpy(all_labels).float()
 
-            # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
-            l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
-                                                    quat_in_wxyz=pt1_T_pt2[3:])
-            all_labels[i+1, :] = np.concatenate((l_hat, m, [theta], [d]))
-
-        # Adding zeros for first image as padding for correct shapes
-        all_labels[0, :] = np.concatenate((all_labels[1, :6], [0.], [0.]))
-
-        all_labels = torch.from_numpy(all_labels).float()
+        all_labels = torch.tensor(obj_data['all_transforms']).float()
 
         # Query label
         pt1 = moving_body_poses[pair_idx[0], :]

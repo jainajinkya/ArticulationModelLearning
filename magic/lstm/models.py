@@ -100,7 +100,6 @@ class KinematicLSTMv1(nn.Module):
 
         # Pass all elements of cnn_embed_seq except last 2 through lstm
         context_embeds = cnn_embed_seq[:, :-2, :]
-
         query_embeds = cnn_embed_seq[:, -2:, :]
         query_embeds = query_embeds.contiguous().view(query_embeds.size(0), -1)
 
