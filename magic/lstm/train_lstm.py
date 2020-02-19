@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
         # init model
         network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                                  drop_p=args.drop_p, h_fc_dim=256, n_output=120)
+                                  drop_p=args.drop_p, h_fc_dim=256, n_output=8)
 
     # elif args.model_type == 'lstm_aug':
     #     trainset = ArticulationDatasetV2(ntrain,
@@ -131,5 +131,5 @@ if __name__ == "__main__":
     # train
     best_model = trainer.train()
 
-    #Test best model
-    trainer.test_best_model(best_model, fname_suffix='_posttraining')
+    # #Test best model
+    # trainer.test_best_model(best_model, fname_suffix='_posttraining')

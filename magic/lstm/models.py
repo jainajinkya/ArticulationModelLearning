@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 class KinematicLSTMv0(nn.Module):
     def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, drop_p=0.5,
-                 h_fc_dim=256, n_output=128):
+                 h_fc_dim=256, n_output=8):
         super(KinematicLSTMv0, self).__init__()
 
         self.lstm_input_dim = 1000
@@ -48,15 +48,18 @@ class KinematicLSTMv0(nn.Module):
         """ None represents zero initial hidden state. RNN_out has shape=(batch, time_step, output_size) """
 
         # FC layers
-        x_rnn = self.fc1(RNN_out[:, -1, :])  # choose RNN_out at the last time step
-        # x_rnn = F.relu(x_rnn)
+        # x_rnn = self.fc1(RNN_out[:, -1, :])  # choose RNN_out at the last time step
+        x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)
+        x_rnn = self.fc1(x_rnn)
+        x_rnn = F.relu(x_rnn)
         x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc2(x_rnn)
-
-        return x_rnn
+        return x_rnn.view(X_3d.size(0), -1)
 
 
 """ LSTM + 2 imgs"""
+
+
 class KinematicLSTMv1(nn.Module):
     def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, drop_p=0.5,
                  h_fc_dim=1000, n_output=8):
@@ -81,7 +84,7 @@ class KinematicLSTMv1(nn.Module):
         )
 
         # self.fc1 = nn.Linear((16 + 2) * self.lstm_hidden_dim, self.h_fc_dim)
-        self.fc1 = nn.Linear(3*self.lstm_hidden_dim, self.h_fc_dim)
+        self.fc1 = nn.Linear(3 * self.lstm_hidden_dim, self.h_fc_dim)
         self.fc2 = nn.Linear(self.h_fc_dim, 256)
         self.fc3 = nn.Linear(256, self.n_output)
 
@@ -167,7 +170,7 @@ class RigidTransformV0(nn.Module):
 
 
 def articulation_lstm_loss(pred, target, wt_on_ax_std=1.0, wt_on_ortho=1., extra_indiv_wts=None):
-    pred = pred.view(pred.size(0), -1, 8)
+    pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
     err = (pred - target) ** 2
     loss = torch.mean(err)
 

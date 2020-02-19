@@ -76,7 +76,7 @@ class ModelTrainer(object):
         for i, X in enumerate(self.trainloader):
             self.optimizer.zero_grad()
             depth, labels = X['depth'].to(self.device), \
-                                        X['label'].to(self.device)
+                            X['label'].to(self.device)
 
             y_pred = self.model(depth)
             loss = self.criterion(y_pred, labels)
@@ -101,7 +101,7 @@ class ModelTrainer(object):
         with torch.no_grad():
             for i, X in enumerate(self.testloader):
                 depth, labels = X['depth'].to(self.device), \
-                                            X['label'].to(self.device)
+                                X['label'].to(self.device)
                 y_pred = self.model(depth)
                 loss = self.criterion(y_pred, labels)
                 running_loss += loss.item()
