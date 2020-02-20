@@ -41,7 +41,7 @@ if __name__ == "__main__":
                                       args.test_dir,
                                       n_dof=args.ndof)
         # load model
-        best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=120)
+        best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
         best_model.load_state_dict(torch.load(args.model_dir + args.model_name + '.net'))
         best_model.float().to(device)
         best_model.eval()
@@ -96,6 +96,9 @@ if __name__ == "__main__":
 
             if args.model_type in ['rt', 'lstm_rt']:
                 labels = labels.view(labels.size(0), -1, 8)
+            if args.model_type == 'lstm':
+                y_pred = y_pred[:, 1:, :]
+            
 
             if args.dual_quat:
                 y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
