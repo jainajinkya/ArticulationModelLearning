@@ -26,7 +26,8 @@ class KinematicLSTMv0(nn.Module):
         )
 
         self.fc1 = nn.Linear(self.lstm_hidden_dim, self.h_fc_dim)
-        self.fc2 = nn.Linear(self.h_fc_dim, self.n_output)
+        self.fc2 = nn.Linear(self.h_fc_dim, self.h_fc_dim)
+        self.fc3 = nn.Linear(self.h_fc_dim, self.n_output)
 
     def forward(self, X_3d):
         # X shape: Batch x Sequence x 3 Channels x img_dims
@@ -54,6 +55,8 @@ class KinematicLSTMv0(nn.Module):
         x_rnn = F.relu(x_rnn)
         x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
         x_rnn = self.fc2(x_rnn)
+        x_rnn = F.relu(x_rnn)
+        x_rnn = self.fc3(x_rnn)
         return x_rnn.view(X_3d.size(0), -1)
 
 
