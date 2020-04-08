@@ -67,7 +67,7 @@ if __name__ == "__main__":
         best_model.eval()
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
-                                             shuffle=True, num_workers=args.nwork,
+                                             shuffle=False, num_workers=args.nwork,
                                              pin_memory=True)
 
     all_l_hat_err = torch.empty(0)
