@@ -29,7 +29,7 @@ if __name__ == "__main__":
                                   n_dof=args.ndof)
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
-                                             shuffle=True, num_workers=args.nwork,
+                                             shuffle=False, num_workers=args.nwork,
                                              pin_memory=True)
 
     if torch.cuda.is_available():
