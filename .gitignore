@@ -8,3 +8,4 @@ plots/
 __pycache__/
 *.orig
 profile
+.idea/*

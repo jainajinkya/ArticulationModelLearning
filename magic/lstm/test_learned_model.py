@@ -30,6 +30,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ntest = args.ntest * args.aug_multi
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
+                                             shuffle=False, num_workers=args.nwork,
+                                             pin_memory=True)
 
     if torch.cuda.is_available():
         device = torch.device(args.device)
