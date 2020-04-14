@@ -30,26 +30,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ntest = args.ntest * args.aug_multi
-    testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
-                                             shuffle=False, num_workers=args.nwork,
-                                             pin_memory=True)
 
     if torch.cuda.is_available():
         device = torch.device(args.device)
     else:
         device = torch.device('cpu')
 
-    if args.model_type == 'lstm':
-        testset = ArticulationDataset(ntest,
-                                      args.test_dir,
-                                      n_dof=args.ndof)
-        # load model
-        best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
-        best_model.load_state_dict(torch.load(args.model_dir + args.model_name + '.net'))
-        best_model.float().to(device)
-        best_model.eval()
-
-    elif args.model_type == 'rt':
+    if args.model_type == 'rt':
         testset = RigidTransformDataset(ntest,
                                         args.test_dir,
                                         n_dof=args.ndof)
@@ -69,6 +56,16 @@ if __name__ == "__main__":
         best_model.float().to(device)
         best_model.eval()
 
+    else:
+        testset = ArticulationDataset(ntest,
+                                      args.test_dir,
+                                      n_dof=args.ndof)
+        # load model
+        best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
+        best_model.load_state_dict(torch.load(args.model_dir + args.model_name + '.net'))
+        best_model.float().to(device)
+        best_model.eval()
+
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                              shuffle=False, num_workers=args.nwork,
                                              pin_memory=True)
@@ -84,8 +81,10 @@ if __name__ == "__main__":
     all_q_std = torch.empty(0)
     all_d_std = torch.empty(0)
 
+    obj_idxs = []  # Recording object indexes for analysis
+
     with torch.no_grad():
-        for X in testloader:
+        for X, obj_idx in testloader:
             if args.model_type == 'lstm_rt':
                 depth, all_labels, labels = X['depth'].to(device), \
                                             X['all_labels'].to(device), \
@@ -101,7 +100,6 @@ if __name__ == "__main__":
                 labels = labels.view(labels.size(0), -1, 8)
             if args.model_type == 'lstm':
                 y_pred = y_pred[:, 1:, :]
-            
 
             if args.dual_quat:
                 y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
@@ -116,12 +114,13 @@ if __name__ == "__main__":
                         torch.norm(labels[:, :, :3], dim=-1) * torch.norm(y_pred[:, :, :3], dim=-1))), dim=-1)
             all_l_hat_err = torch.cat((all_l_hat_err, l_hat_mean.cpu()))
 
-            m_std, m_mean = torch.std_mean(
-                torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1), dim=-1)
-            m_std_abs, m_mean_abs = torch.std_mean(
-                torch.abs(torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1)), dim=-1)
+            # m_std, m_mean = torch.std_mean(
+            #     torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1), dim=-1)
+            # m_std_abs, m_mean_abs = torch.std_mean(
+            #     torch.abs(torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1)), dim=-1)
+            m_std, m_mean = torch.std_mean(err[:, :, 3:6], dim=-1)
             all_m_err = torch.cat((all_m_err, m_mean.cpu()))
-            all_m_err_abs = torch.cat((all_m_err_abs, m_mean_abs.cpu()))
+            # all_m_err_abs = torch.cat((all_m_err_abs, m_mean_abs.cpu()))
 
             all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
             all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
@@ -132,13 +131,18 @@ if __name__ == "__main__":
 
             all_l_hat_std = torch.cat((all_l_hat_std, l_hat_std.cpu()))
             all_m_std = torch.cat((all_m_std, m_std.cpu()))
-            all_m_std_abs = torch.cat((all_m_std_abs, m_std_abs.cpu()))
+            # all_m_std_abs = torch.cat((all_m_std_abs, m_std_abs.cpu()))
             all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
             all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
+            obj_idxs.append(obj_idx)
+
     # Plot variation of screw axis
     output_dir = args.output_dir + args.model_name
-    x_axis = np.arange(all_l_hat_err.size(0))
+    # x_axis = np.arange(all_l_hat_err.size(0))
+    x_axis = np.array(obj_idxs)
+
+    # Sort objects as per the idxs
 
     fig = plt.figure(1)
     plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), marker='o', mfc='blue', ms=4., capsize=3.,

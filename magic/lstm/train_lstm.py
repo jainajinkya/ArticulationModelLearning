@@ -39,20 +39,6 @@ if __name__ == "__main__":
     ntrain = args.ntrain * args.aug_multi
     ntest = args.ntest * args.aug_multi
 
-    if args.model_type == 'lstm':
-        trainset = ArticulationDataset(ntrain,
-                                       args.train_dir,
-                                       n_dof=args.ndof)
-
-        testset = ArticulationDataset(ntest,
-                                      args.test_dir,
-                                      n_dof=args.ndof)
-        loss_fn = articulation_lstm_loss
-
-        # init model
-        network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                                  drop_p=args.drop_p, h_fc_dim=256, n_output=8)
-
     # elif args.model_type == 'lstm_aug':
     #     trainset = ArticulationDatasetV2(ntrain,
     #                                      args.train_dir,
@@ -66,7 +52,7 @@ if __name__ == "__main__":
     #     network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
     #                               drop_p=args.drop_p, h_fc_dim=256, n_output=120)
 
-    elif args.model_type == 'rt':
+    if args.model_type == 'rt':
         '''Rigid Transform Datasets'''
         trainset = RigidTransformDataset(ntrain,
                                          args.train_dir,
@@ -93,6 +79,20 @@ if __name__ == "__main__":
         loss_fn = articulation_lstm_loss_RT
 
         network = KinematicLSTMv1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+                                  drop_p=args.drop_p, h_fc_dim=256, n_output=8)
+
+    else:   # Default: 'lstm'
+        trainset = ArticulationDataset(ntrain,
+                                       args.train_dir,
+                                       n_dof=args.ndof)
+
+        testset = ArticulationDataset(ntest,
+                                      args.test_dir,
+                                      n_dof=args.ndof)
+        loss_fn = articulation_lstm_loss
+
+        # init model
+        network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
                                   drop_p=args.drop_p, h_fc_dim=256, n_output=8)
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,

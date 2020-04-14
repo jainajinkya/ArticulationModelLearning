@@ -70,7 +70,7 @@ class ArticulationDataset(Dataset):
         sample = {'depth': depth_imgs,
                   'label': label}
 
-        return sample
+        return sample, idx
 
 #
 # ### LSTM with Data Augmentation
@@ -191,7 +191,7 @@ class ArticulationDatasetV1(Dataset):
                   'all_labels': all_labels,
                   'label': label}
 
-        return sample
+        return sample, obj_idx
 
 
 ## Rigid Transform
@@ -238,4 +238,4 @@ class RigidTransformDataset(Dataset):
         sample = {'depth': depth_imgs,
                   'label': label}
 
-        return sample
+        return sample, obj_idx
