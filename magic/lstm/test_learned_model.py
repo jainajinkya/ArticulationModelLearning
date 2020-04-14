@@ -135,7 +135,7 @@ if __name__ == "__main__":
             all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
             all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
-            obj_idxs = torch.cat((obj_idxs, batch_idxs.cpu()))
+            obj_idxs = torch.cat((obj_idxs, batch_idxs.cpu().float()))
 
     # Plot variation of screw axis
     output_dir = args.output_dir + args.model_name
