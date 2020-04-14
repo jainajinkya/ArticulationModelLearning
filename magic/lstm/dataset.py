@@ -150,6 +150,7 @@ class ArticulationDatasetV1(Dataset):
         self.length = ntrain
         self.n_dof = n_dof
         self.pair_idxs = list(combinations(range(16), r=2))
+        self.n_step_idxs = 4
 
     def __len__(self):
         return self.length
@@ -165,36 +166,20 @@ class ArticulationDatasetV1(Dataset):
         obj_data = self.labels_data['obj_' + str(obj_idx).zfill(6)]
 
         # Load depth image
-        depth_imgs = torch.from_numpy(np.concatenate((obj_data['depth_imgs'],
+        depth_imgs = torch.from_numpy(np.concatenate((obj_data['depth_imgs'][:-1:self.n_step_idxs],
                                                       np.expand_dims(obj_data['depth_imgs'][pair_idx[0]], axis=0),
                                                       np.expand_dims(obj_data['depth_imgs'][pair_idx[1]], axis=0))))
 
         depth_imgs.unsqueeze_(1).float()
-        depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
+        # depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
+        depth_imgs = depth_imgs.repeat(1, 3, 1, 1)
 
         # Load labels
-        moving_body_poses = obj_data['moving_frame_in_world']
-
-        # all_labels = np.empty((len(moving_body_poses), 8))
-        # for i in range(len(moving_body_poses) - 1):
-        #     pt1 = moving_body_poses[i, :]
-        #     pt2 = moving_body_poses[i + 1, :]
-        #     pt1_T_pt2 = change_frames(pt1, pt2)
-        #
-        #     # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
-        #     l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
-        #                                             quat_in_wxyz=pt1_T_pt2[3:])
-        #     all_labels[i+1, :] = np.concatenate((l_hat, m, [theta], [d]))
-        #
-        # # Adding zeros for first image as padding for correct shapes
-        # all_labels[0, :] = np.concatenate((all_labels[1, :6], [0.], [0.]))
-        # all_labels = torch.from_numpy(all_labels).float()
-
-        all_labels = torch.tensor(obj_data['all_transforms']).float()
+        all_labels = torch.tensor(obj_data['all_transforms'][:-1:self.n_step_idxs]).float()
 
         # Query label
-        pt1 = moving_body_poses[pair_idx[0], :]
-        pt2 = moving_body_poses[pair_idx[1], :]
+        pt1 = obj_data['moving_frame_in_world'][pair_idx[0], :]
+        pt2 = obj_data['moving_frame_in_world'][pair_idx[1], :]
         pt1_T_pt2 = change_frames(pt1, pt2)
 
         # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>

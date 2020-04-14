@@ -61,8 +61,6 @@ class KinematicLSTMv0(nn.Module):
 
 
 """ LSTM + 2 imgs"""
-
-
 class KinematicLSTMv1(nn.Module):
     def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, drop_p=0.5,
                  h_fc_dim=1000, n_output=8):
@@ -86,7 +84,6 @@ class KinematicLSTMv1(nn.Module):
             batch_first=True,
         )
 
-        # self.fc1 = nn.Linear((16 + 2) * self.lstm_hidden_dim, self.h_fc_dim)
         self.fc1 = nn.Linear(3 * self.lstm_hidden_dim, self.h_fc_dim)
         self.fc2 = nn.Linear(self.h_fc_dim, 256)
         self.fc3 = nn.Linear(256, self.n_output)

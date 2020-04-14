@@ -140,8 +140,10 @@ class ModelTrainer(object):
 
         with torch.no_grad():
             for X in self.testloader:
-                depth, labels = X['depth'].to(self.device), X['label'].to(self.device)
-                y_pred = best_model(depth)
+                depth, all_labels, labels = X['depth'].to(self.device), \
+                                            X['all_labels'].to(self.device),\
+                                            X['label'].to(self.device)
+                y_pred = best_model(depth, all_labels)
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
 
                 if dual_quat_mode:
