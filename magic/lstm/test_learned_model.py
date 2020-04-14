@@ -81,10 +81,10 @@ if __name__ == "__main__":
     all_q_std = torch.empty(0)
     all_d_std = torch.empty(0)
 
-    obj_idxs = []  # Recording object indexes for analysis
+    obj_idxs = torch.empty(0)  # Recording object indexes for analysis
 
     with torch.no_grad():
-        for X, obj_idx in testloader:
+        for X, batch_idxs in testloader:
             if args.model_type == 'lstm_rt':
                 depth, all_labels, labels = X['depth'].to(device), \
                                             X['all_labels'].to(device), \
@@ -135,12 +135,12 @@ if __name__ == "__main__":
             all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
             all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
-            obj_idxs.append(obj_idx)
+            obj_idxs = torch.cat((obj_idxs, batch_idxs.cpu()))
 
     # Plot variation of screw axis
     output_dir = args.output_dir + args.model_name
     # x_axis = np.arange(all_l_hat_err.size(0))
-    x_axis = np.array(obj_idxs)
+    x_axis = obj_idxs.numpy()
 
     # Sort objects as per the idxs
 
