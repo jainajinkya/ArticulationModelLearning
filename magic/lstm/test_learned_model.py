@@ -203,7 +203,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     # Storing data for particle filter analysis
-    p_data = {'lables': all_labels.numpy(), 'preds': all_preds.numpy(), 'errs': all_errs.numpy()}
+    p_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(), 'errors': all_errs.numpy()}
     import pickle
-    with open(output_dir + '/test_prediction_data.pkl', 'w') as fo:
-        pickle.dump(fo, p_data)
+    pickle.dump(p_data, open(output_dir + '/test_prediction_data.pkl', 'wb'))
+
