@@ -191,7 +191,7 @@ class ArticulationDatasetV1(Dataset):
                   'all_labels': all_labels,
                   'label': label}
 
-        return sample, obj_idx
+        return sample
 
 
 ## Rigid Transform
