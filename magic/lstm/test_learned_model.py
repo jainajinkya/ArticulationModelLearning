@@ -83,6 +83,11 @@ if __name__ == "__main__":
 
     obj_idxs = torch.empty(0)  # Recording object indexes for analysis
 
+    # Data collection for particle filter testing
+    all_labels = torch.empty(0)
+    all_preds = torch.empty(0)
+    all_errs = torch.empty(0)
+
     with torch.no_grad():
         for X, batch_idxs in testloader:
             if args.model_type == 'lstm_rt':
@@ -137,6 +142,11 @@ if __name__ == "__main__":
 
             obj_idxs = torch.cat((obj_idxs, batch_idxs.cpu().float()))
 
+            # Data for particle filter
+            all_labels = torch.cat((all_labels, labels.cpu()))
+            all_preds = torch.cat((all_preds, y_pred.cpu()))
+            all_errs = torch.cat((all_errs, err.cpu()))
+
     # Plot variation of screw axis
     output_dir = args.output_dir + args.model_name
     # x_axis = np.arange(all_l_hat_err.size(0))
@@ -190,3 +200,9 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(output_dir + '/d_err.png')
     plt.close(fig)
+
+    # Storing data for particle filter analysis
+    p_data = {'lables': all_labels.numpy(), 'preds': all_preds.numpy(), 'errs': all_errs.numpy()}
+    import pickle
+    with open(output_dir + '/test_prediction_data.pkl', 'w') as fo:
+        pickle.dump(fo, p_data)
