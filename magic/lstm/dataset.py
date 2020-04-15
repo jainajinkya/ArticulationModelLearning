@@ -238,4 +238,4 @@ class RigidTransformDataset(Dataset):
         sample = {'depth': depth_imgs,
                   'label': label}
 
-        return sample, obj_idx
+        return sample

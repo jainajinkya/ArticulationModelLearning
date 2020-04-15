@@ -89,7 +89,8 @@ if __name__ == "__main__":
     all_errs = torch.empty(0)
 
     with torch.no_grad():
-        for X, batch_idxs in testloader:
+        # for X, batch_idxs in testloader:
+        for X in testloader:
             if args.model_type == 'lstm_rt':
                 depth, all_labels, labels = X['depth'].to(device), \
                                             X['all_labels'].to(device), \
@@ -140,7 +141,7 @@ if __name__ == "__main__":
             all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
             all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
-            obj_idxs = torch.cat((obj_idxs, batch_idxs.cpu().float()))
+            # obj_idxs = torch.cat((obj_idxs, batch_idxs.cpu().float()))
 
             # Data for particle filter
             all_labels = torch.cat((all_labels, labels.cpu()))
@@ -149,8 +150,8 @@ if __name__ == "__main__":
 
     # Plot variation of screw axis
     output_dir = args.output_dir + args.model_name
-    # x_axis = np.arange(all_l_hat_err.size(0))
-    x_axis = obj_idxs.numpy()
+    x_axis = np.arange(all_l_hat_err.size(0))
+    # x_axis = obj_idxs.numpy()
 
     # Sort objects as per the idxs
     fig = plt.figure(1)
