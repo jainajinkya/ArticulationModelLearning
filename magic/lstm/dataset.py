@@ -70,7 +70,7 @@ class ArticulationDataset(Dataset):
         sample = {'depth': depth_imgs,
                   'label': label}
 
-        return sample, idx
+        return sample
 
 #
 # ### LSTM with Data Augmentation
