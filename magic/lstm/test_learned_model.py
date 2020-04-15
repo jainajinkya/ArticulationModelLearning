@@ -118,7 +118,7 @@ if __name__ == "__main__":
             #     torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1), dim=-1)
             # m_std_abs, m_mean_abs = torch.std_mean(
             #     torch.abs(torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1)), dim=-1)
-            m_std, m_mean = torch.std_mean(err[:, :, 3:6], dim=-1)
+            m_std, m_mean = torch.std_mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1)
             all_m_err = torch.cat((all_m_err, m_mean.cpu()))
             # all_m_err_abs = torch.cat((all_m_err_abs, m_mean_abs.cpu()))
 
@@ -143,7 +143,6 @@ if __name__ == "__main__":
     x_axis = obj_idxs.numpy()
 
     # Sort objects as per the idxs
-
     fig = plt.figure(1)
     plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), marker='o', mfc='blue', ms=4., capsize=3.,
                  capthick=1.)
@@ -163,6 +162,7 @@ if __name__ == "__main__":
     plt.savefig(output_dir + '/m_err_norm.png')
     plt.close(fig)
 
+    """
     fig = plt.figure(2)
     plt.errorbar(x_axis, all_m_err_abs.numpy(), all_m_std_abs.numpy(), marker='o', mfc='blue', ms=4, capsize=3.,
                  capthick=1.)
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(output_dir + '/m_err_abs_norm.png')
     plt.close(fig)
-
+    """
     fig = plt.figure(3)
     plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
