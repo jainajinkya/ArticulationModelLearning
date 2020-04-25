@@ -126,7 +126,7 @@ if __name__ == "__main__":
             all_ori_err_std = torch.cat((all_ori_err_std, ori_err_std.cpu()))
 
             # Distance b/w plucker lines
-            dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred))
+            dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred), dim=-1)
             all_dist_err_mean = torch.cat((all_dist_err_mean, dist_err_mean.cpu()))
             all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std.cpu()))
 
