@@ -1,12 +1,12 @@
+import argparse
+
+import matplotlib
 import numpy as np
 import torch
-import argparse
-import matplotlib
-
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, ArticulationDatasetV1, \
     RigidTransformDataset
 from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, KinematicLSTMv1, RigidTransformV0
-from ArticulationModelLearning.magic.lstm.utils import dual_quaternion_to_screw_batch_mode
+from ArticulationModelLearning.magic.lstm.utils import dual_quaternion_to_screw_batch_mode, distance_bw_plucker_lines
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -70,14 +70,21 @@ if __name__ == "__main__":
                                              shuffle=False, num_workers=args.nwork,
                                              pin_memory=True)
 
-    all_l_hat_err = torch.empty(0)
-    all_m_err = torch.empty(0)
-    all_m_err_abs = torch.empty(0)
-    all_q_err = torch.empty(0)
-    all_d_err = torch.empty(0)
-    all_l_hat_std = torch.empty(0)
-    all_m_std = torch.empty(0)
-    all_m_std_abs = torch.empty(0)
+    # all_l_hat_err = torch.empty(0)
+    # all_m_err = torch.empty(0)
+    # all_m_err_abs = torch.empty(0)
+    # all_q_err = torch.empty(0)
+    # all_d_err = torch.empty(0)
+    # all_l_hat_std = torch.empty(0)
+    # all_m_std = torch.empty(0)
+    # all_m_std_abs = torch.empty(0)
+    # all_q_std = torch.empty(0)
+    # all_d_std = torch.empty(0)
+
+    all_ori_err_mean = torch.empty(0)
+    all_ori_err_std = torch.empty(0)
+    all_dist_err_mean = torch.empty(0)
+    all_dist_err_std = torch.empty(0)
     all_q_std = torch.empty(0)
     all_d_std = torch.empty(0)
 
@@ -111,67 +118,130 @@ if __name__ == "__main__":
                 y_pred = dual_quaternion_to_screw_batch_mode(y_pred)
                 labels = dual_quaternion_to_screw_batch_mode(labels)
 
-            err = labels - y_pred
-            # all_l_hat_err = torch.cat(
-            #   (all_l_hat_err, torch.mean(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
-            # all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
-            l_hat_std, l_hat_mean = torch.std_mean(torch.acos(
+            # Orientation error
+            ori_err_std, ori_err_mean = torch.std_mean(torch.acos(
                 torch.mul(labels[:, :, :3], y_pred[:, :, :3]).sum(dim=-1) / (
                         torch.norm(labels[:, :, :3], dim=-1) * torch.norm(y_pred[:, :, :3], dim=-1))), dim=-1)
-            all_l_hat_err = torch.cat((all_l_hat_err, l_hat_mean.cpu()))
+            all_ori_err_mean = torch.cat((all_ori_err_mean, ori_err_mean.cpu()))
+            all_ori_err_std = torch.cat((all_ori_err_std, ori_err_std.cpu()))
 
-            # m_std, m_mean = torch.std_mean(
-            #     torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1), dim=-1)
-            # m_std_abs, m_mean_abs = torch.std_mean(
-            #     torch.abs(torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1)), dim=-1)
-            m_std, m_mean = torch.std_mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1)
-            all_m_err = torch.cat((all_m_err, m_mean.cpu()))
-            # all_m_err_abs = torch.cat((all_m_err_abs, m_mean_abs.cpu()))
+            # Distance b/w plucker lines
+            dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred))
+            all_dist_err_mean = torch.cat((all_dist_err_mean, dist_err_mean))
+            all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std))
 
-            all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
-            all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
+            # Configurational errors
+            q_err_std, q_err_mean = torch.std_mean(labels[:, :, 6] - y_pred[:, :, 6], dim=-1)
+            all_q_mean = torch.cat((all_q_mean, q_err_mean.cpu()))
+            all_q_std = torch.cat((all_q_std, q_err_std.cpu()))
 
-            # all_l_hat_std = torch.cat(
-            #    (all_l_hat_std, torch.std(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
-            # all_m_std = torch.cat((all_m_std, torch.std(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+            d_err_std, d_err_mean = torch.std_mean(labels[:, :, 7] - y_pred[:, :, 7], dim=-1)
+            all_d_mean = torch.cat((all_d_std, d_err_mean.cpu()))
+            all_d_std = torch.cat((all_d_std, d_err_std.cpu()))
 
-            all_l_hat_std = torch.cat((all_l_hat_std, l_hat_std.cpu()))
-            all_m_std = torch.cat((all_m_std, m_std.cpu()))
-            # all_m_std_abs = torch.cat((all_m_std_abs, m_std_abs.cpu()))
-            all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
-            all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
+            # # err = labels - y_pred
+            # # all_l_hat_err = torch.cat(
+            # #   (all_l_hat_err, torch.mean(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
+            # # all_m_err = torch.cat((all_m_err, torch.mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+            # l_hat_std, l_hat_mean = torch.std_mean(torch.acos(
+            #     torch.mul(labels[:, :, :3], y_pred[:, :, :3]).sum(dim=-1) / (
+            #             torch.norm(labels[:, :, :3], dim=-1) * torch.norm(y_pred[:, :, :3], dim=-1))), dim=-1)
+            # all_l_hat_err = torch.cat((all_l_hat_err, l_hat_mean.cpu()))
+            #
+            # # m_std, m_mean = torch.std_mean(
+            # #     torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1), dim=-1)
+            # # m_std_abs, m_mean_abs = torch.std_mean(
+            # #     torch.abs(torch.norm(labels[:, :, 3:6], dim=-1) - torch.norm(y_pred[:, :, 3:6], dim=-1)), dim=-1)
+            # m_std, m_mean = torch.std_mean(torch.norm(err[:, :, 3:6], dim=-1), dim=-1)
+            # all_m_err = torch.cat((all_m_err, m_mean.cpu()))
+            # # all_m_err_abs = torch.cat((all_m_err_abs, m_mean_abs.cpu()))
+            #
+            # all_q_err = torch.cat((all_q_err, torch.mean(err[:, :, 6], dim=-1).cpu()))
+            # all_d_err = torch.cat((all_d_err, torch.mean(err[:, :, 7], dim=-1).cpu()))
+            #
+            # # all_l_hat_std = torch.cat(
+            # #    (all_l_hat_std, torch.std(torch.norm(err[:, :, :3], dim=-1), dim=-1).cpu()))
+            # # all_m_std = torch.cat((all_m_std, torch.std(torch.norm(err[:, :, 3:6], dim=-1), dim=-1).cpu()))
+            #
+            # all_l_hat_std = torch.cat((all_l_hat_std, l_hat_std.cpu()))
+            # all_m_std = torch.cat((all_m_std, m_std.cpu()))
+            # # all_m_std_abs = torch.cat((all_m_std_abs, m_std_abs.cpu()))
+            #
+            #
+            # all_q_std = torch.cat((all_q_std, torch.std(err[:, :, 6], dim=-1).cpu()))
+            # all_d_std = torch.cat((all_d_std, torch.std(err[:, :, 7], dim=-1).cpu()))
 
             # obj_idxs = torch.cat((obj_idxs, batch_idxs.cpu().float()))
 
             # Data for particle filter
             all_labels = torch.cat((all_labels, labels.cpu()))
             all_preds = torch.cat((all_preds, y_pred.cpu()))
-            all_errs = torch.cat((all_errs, err.cpu()))
+            all_errs = torch.cat((all_errs, (labels - y_pred).cpu()))
 
     # Plot variation of screw axis
     output_dir = args.output_dir + args.model_name
-    x_axis = np.arange(all_l_hat_err.size(0))
+    x_axis = np.arange(all_q_mean.size(0))
+    # x_axis = np.arange(all_l_hat_err.size(0))
     # x_axis = obj_idxs.numpy()
 
     # Sort objects as per the idxs
     fig = plt.figure(1)
-    plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), marker='o', mfc='blue', ms=4., capsize=3.,
+    plt.errorbar(x_axis, all_ori_err_mean.numpy(), all_ori_err_std.numpy(), marker='o', mfc='blue', ms=4., capsize=3.,
                  capthick=1.)
     plt.xlabel("Test object number")
-    plt.ylabel("Angle error (rad)")
+    plt.ylabel("Orientation error (rad)")
     plt.title("Test error in screw axis orientation")
     plt.tight_layout()
-    plt.savefig(output_dir + '/l_hat_err_angle.png')
+    plt.savefig(output_dir + '/orientation_test_error.png')
     plt.close(fig)
 
     fig = plt.figure(2)
-    plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), marker='o', ms=4, mfc='blue', capsize=3., capthick=1.)
+    plt.errorbar(x_axis, all_dist_err_mean.numpy(), all_dist_err_std.numpy(), marker='o', ms=4, mfc='blue', capsize=3.,
+                 capthick=1.)
+    plt.xlabel("Test object number")
+    plt.ylabel("Spatial distance error (m)")
+    plt.title("Test error in spatial distance")
+    plt.tight_layout()
+    plt.savefig(output_dir + '/distance_test_error.png')
+    plt.close(fig)
+
+    fig = plt.figure(3)
+    plt.errorbar(x_axis, all_q_mean.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
     plt.ylabel("Error")
-    plt.title("Test error in norm(m)")
+    plt.title("Test error in theta")
     plt.tight_layout()
-    plt.savefig(output_dir + '/m_err_norm.png')
+    plt.savefig(output_dir + '/theta_err.png')
     plt.close(fig)
+
+    fig = plt.figure(4)
+    plt.errorbar(x_axis, all_d_mean.numpy(), all_d_std.numpy(), capsize=3., capthick=1.)
+    plt.xlabel("Test object number")
+    plt.ylabel("Error")
+    plt.title("Test error in d")
+    plt.tight_layout()
+    plt.savefig(output_dir + '/d_err.png')
+    plt.close(fig)
+
+    # # Sort objects as per the idxs
+    # fig = plt.figure(1)
+    # plt.errorbar(x_axis, all_l_hat_err.numpy(), all_l_hat_std.numpy(), marker='o', mfc='blue', ms=4., capsize=3.,
+    #              capthick=1.)
+    # plt.xlabel("Test object number")
+    # plt.ylabel("Angle error (rad)")
+    # plt.title("Test error in screw axis orientation")
+    # plt.tight_layout()
+    # plt.savefig(output_dir + '/l_hat_err_angle.png')
+    # plt.close(fig)
+    #
+    # fig = plt.figure(2)
+    # plt.errorbar(x_axis, all_m_err.numpy(), all_m_std.numpy(), marker='o', ms=4, mfc='blue', capsize=3., capthick=1.)
+    # plt.xlabel("Test object number")
+    # plt.ylabel("Error")
+    # plt.title("Test error in norm(m)")
+    # plt.tight_layout()
+    # plt.savefig(output_dir + '/m_err_norm.png')
+    # plt.close(fig)
 
     """
     fig = plt.figure(2)
@@ -184,26 +254,26 @@ if __name__ == "__main__":
     plt.savefig(output_dir + '/m_err_abs_norm.png')
     plt.close(fig)
     """
-    fig = plt.figure(3)
-    plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
-    plt.xlabel("Test object number")
-    plt.ylabel("Error")
-    plt.title("Test error in theta")
-    plt.tight_layout()
-    plt.savefig(output_dir + '/theta_err.png')
-    plt.close(fig)
-
-    fig = plt.figure(4)
-    plt.errorbar(x_axis, all_d_err.numpy(), all_d_std.numpy(), capsize=3., capthick=1.)
-    plt.xlabel("Test object number")
-    plt.ylabel("Error")
-    plt.title("Test error in d")
-    plt.tight_layout()
-    plt.savefig(output_dir + '/d_err.png')
-    plt.close(fig)
+    # fig = plt.figure(3)
+    # plt.errorbar(x_axis, all_q_err.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
+    # plt.xlabel("Test object number")
+    # plt.ylabel("Error")
+    # plt.title("Test error in theta")
+    # plt.tight_layout()
+    # plt.savefig(output_dir + '/theta_err.png')
+    # plt.close(fig)
+    #
+    # fig = plt.figure(4)
+    # plt.errorbar(x_axis, all_d_err.numpy(), all_d_std.numpy(), capsize=3., capthick=1.)
+    # plt.xlabel("Test object number")
+    # plt.ylabel("Error")
+    # plt.title("Test error in d")
+    # plt.tight_layout()
+    # plt.savefig(output_dir + '/d_err.png')
+    # plt.close(fig)
 
     # Storing data for particle filter analysis
     p_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(), 'errors': all_errs.numpy()}
     import pickle
-    pickle.dump(p_data, open(output_dir + '/test_prediction_data.pkl', 'wb'))
 
+    pickle.dump(p_data, open(output_dir + '/test_prediction_data.pkl', 'wb'))

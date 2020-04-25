@@ -1,11 +1,10 @@
 from itertools import combinations
 
+import dq3d
 import h5py
 import numpy as np
 import torch
 import transforms3d as tf3d
-import dq3d
-
 from SyntheticArticulatedData.generation.utils import change_frames
 
 
@@ -159,11 +158,35 @@ def append_all_labels_to_dataset(filename):
     print("Added all transforms to the dataset.")
 
 
+def distance_bw_plucker_lines(line1, line2):
+    # Based on formula from Plücker Coordinates for Lines in the Space by Prof. Yan-bin Jia
+    # Verified by https://keisan.casio.com/exec/system/1223531414
+    norm_cross_prod = torch.norm(torch.cross(line1[:, :, :3], line2[:, :, :3], dim=-1), dim=-1)
+    dist = torch.zeros_like(norm_cross_prod)
+
+    # Checking for Parallel Lines
+    thres = 1e-9
+    if torch.any(norm_cross_prod < thres):
+        zero_idxs = (norm_cross_prod < thres).nonzero(as_tuple=True)
+        scales = torch.norm(line2[zero_idxs][:, :3], dim=-1) / torch.norm(line1[zero_idxs][:, :3], dim=-1)
+        dist[zero_idxs] = torch.norm(torch.cross(line1[zero_idxs][:, :3], (
+                line1[zero_idxs][:, 3:6] - line2[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / torch.mul(
+            line1[zero_idxs][:, :3], line1[zero_idxs][:, :3]).sum(dim=-1)
+
+    # Skew Lines: Non zero cross product
+    nonzero_idxs = (norm_cross_prod > thres).nonzero(as_tuple=True)
+    dist[nonzero_idxs] = torch.abs(
+        torch.mul(line1[nonzero_idxs][:, :3], line2[nonzero_idxs][:, 3:6]).sum(dim=-1) + torch.mul(
+            line1[nonzero_idxs][:, 3:6], line2[nonzero_idxs][:, :3]).sum(dim=-1)) / norm_cross_prod[nonzero_idxs]
+    return dist
+
+
 ## Plotting Utils
 def set_axes_radius(ax, origin, radius):
     ax.set_xlim3d([origin[0] - radius, origin[0] + radius])
     ax.set_ylim3d([origin[1] - radius, origin[1] + radius])
     ax.set_zlim3d([origin[2] - radius, origin[2] + radius])
+
 
 def set_axes_equal(ax):
     '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
