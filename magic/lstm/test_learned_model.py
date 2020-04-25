@@ -127,8 +127,8 @@ if __name__ == "__main__":
 
             # Distance b/w plucker lines
             dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred))
-            all_dist_err_mean = torch.cat((all_dist_err_mean, dist_err_mean))
-            all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std))
+            all_dist_err_mean = torch.cat((all_dist_err_mean, dist_err_mean.cpu()))
+            all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std.cpu()))
 
             # Configurational errors
             q_err_std, q_err_mean = torch.std_mean(labels[:, :, 6] - y_pred[:, :, 6], dim=-1)
