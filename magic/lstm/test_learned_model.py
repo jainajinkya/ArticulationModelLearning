@@ -85,7 +85,9 @@ if __name__ == "__main__":
     all_ori_err_std = torch.empty(0)
     all_dist_err_mean = torch.empty(0)
     all_dist_err_std = torch.empty(0)
+    all_q_mean = torch.empty(0)
     all_q_std = torch.empty(0)
+    all_d_mean = torch.empty(0)
     all_d_std = torch.empty(0)
 
     obj_idxs = torch.empty(0)  # Recording object indexes for analysis
