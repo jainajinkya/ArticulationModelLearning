@@ -79,7 +79,7 @@ class ModelTrainer(object):
                             X['label'].to(self.device)
 
             y_pred = self.model(depth)
-            loss = self.criterion(y_pred, labels)
+            loss = self.criterion(y_pred, labels, loss_type='L1')
             if loss.data == -float('inf'):
                 print('inf loss caught, not backpropping')
                 running_loss += -1000
@@ -103,7 +103,7 @@ class ModelTrainer(object):
                 depth, labels = X['depth'].to(self.device), \
                                 X['label'].to(self.device)
                 y_pred = self.model(depth)
-                loss = self.criterion(y_pred, labels)
+                loss = self.criterion(y_pred, labels, loss_type='L1')
                 running_loss += loss.item()
 
         stop = time.time()

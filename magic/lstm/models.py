@@ -169,9 +169,15 @@ class RigidTransformV0(nn.Module):
         return x_rnn
 
 
-def articulation_lstm_loss(pred, target, wt_on_ax_std=1.0, wt_on_ortho=1., extra_indiv_wts=None):
+def articulation_lstm_loss(pred, target, loss_type=None, wt_on_ax_std=1.0, wt_on_ortho=1., extra_indiv_wts=None):
     pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
-    err = (pred - target) ** 2
+
+    if loss_type == 'L1':
+        err = torch.abs(pred - target)
+    else:
+        # Default loss_type == 'MSE':
+        err = (pred - target) ** 2
+
     loss = torch.mean(err)
 
     # Penalize spread of screw axis
