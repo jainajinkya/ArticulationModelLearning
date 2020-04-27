@@ -5,7 +5,8 @@ from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, Ri
     ArticulationDatasetV1
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0, KinematicLSTMv1, \
-    articulation_lstm_loss, articulation_lstm_loss_RT
+    articulation_lstm_loss_L2, articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
+    articulation_lstm_loss_L1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -89,7 +90,9 @@ if __name__ == "__main__":
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
                                       n_dof=args.ndof)
-        loss_fn = articulation_lstm_loss
+        # loss_fn = articulation_lstm_loss_L2
+        loss_fn = articulation_lstm_loss_spatial_distance
+
         # init model
         network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
                                   drop_p=args.drop_p, h_fc_dim=256, n_output=8)

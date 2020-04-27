@@ -2,9 +2,9 @@ import os
 import sys
 import time
 
+import matplotlib
 import numpy as np
 import torch
-import matplotlib
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -25,6 +25,7 @@ class ModelTrainer(object):
                  device,
                  obj='microwave',
                  ndof=1):
+
         super(ModelTrainer, self).__init__()
         self.model = model
         self.trainloader = train_loader
@@ -79,7 +80,7 @@ class ModelTrainer(object):
                             X['label'].to(self.device)
 
             y_pred = self.model(depth)
-            loss = self.criterion(y_pred, labels, loss_type='L1')
+            loss = self.criterion(y_pred, labels)
             if loss.data == -float('inf'):
                 print('inf loss caught, not backpropping')
                 running_loss += -1000
@@ -103,7 +104,7 @@ class ModelTrainer(object):
                 depth, labels = X['depth'].to(self.device), \
                                 X['label'].to(self.device)
                 y_pred = self.model(depth)
-                loss = self.criterion(y_pred, labels, loss_type='L1')
+                loss = self.criterion(y_pred, labels)
                 running_loss += loss.item()
 
         stop = time.time()
@@ -141,7 +142,7 @@ class ModelTrainer(object):
         with torch.no_grad():
             for X in self.testloader:
                 depth, all_labels, labels = X['depth'].to(self.device), \
-                                            X['all_labels'].to(self.device),\
+                                            X['all_labels'].to(self.device), \
                                             X['label'].to(self.device)
                 y_pred = best_model(depth, all_labels)
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
