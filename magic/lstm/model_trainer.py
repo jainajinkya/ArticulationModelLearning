@@ -18,6 +18,7 @@ class ModelTrainer(object):
                  train_loader,
                  test_loader,
                  optimizer,
+                 scheduler,
                  criterion,
                  epochs,
                  name,
@@ -31,6 +32,7 @@ class ModelTrainer(object):
         self.trainloader = train_loader
         self.testloader = test_loader
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.criterion = criterion
         self.epochs = epochs
         self.name = name
@@ -61,6 +63,8 @@ class ModelTrainer(object):
                     net_fname = 'models/' + str(self.name) + '.net'
                     torch.save(self.model.state_dict(), net_fname)
                     best_tloss = tloss
+
+            self.scheduler.step()
 
         # plot losses one more time
         self.plot_losses()

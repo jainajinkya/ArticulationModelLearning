@@ -118,10 +118,13 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(network.parameters(),
                                  lr=args.learning_rate)
 
+    scheduler = torch.optim.StepLR(optimizer, step_size=50, gamma=0.1)
+
     trainer = ModelTrainer(model=network,
                            train_loader=trainloader,
                            test_loader=testloader,
                            optimizer=optimizer,
+                           scheduler=scheduler,
                            criterion=loss_fn,
                            epochs=args.epochs,
                            name=args.name,
