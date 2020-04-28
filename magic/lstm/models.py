@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchvision import models
 import torch.nn.functional as F
 
-from magic.lstm.utils import distance_bw_plucker_lines, orientation_difference_bw_plucker_lines
+from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, orientation_difference_bw_plucker_lines
 
 
 class KinematicLSTMv0(nn.Module):
@@ -175,7 +175,9 @@ def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ax_std=0.0, wt_o
     """ Based on Spatial distance"""
     pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
 
-    err = orientation_difference_bw_plucker_lines(target, pred)**2 + distance_bw_plucker_lines(target, pred)**2
+    dist_err = orientation_difference_bw_plucker_lines(target, pred)**2 + distance_bw_plucker_lines(target, pred)**2
+    conf_err = ((target[:, :, 6:] - pred[:, :, 6:])**2).sum(dim=-1)
+    err = dist_err + conf_err
     loss = torch.mean(err)
 
     # Penalize spread of screw axis
@@ -184,17 +186,6 @@ def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ax_std=0.0, wt_o
     # Ensure orthogonality between l_hat and m
     loss += wt_on_ortho * torch.mean(torch.abs(torch.sum(torch.mul(pred[:, :, :3], pred[:, :, 3:6]), dim=-1)))
 
-    if extra_indiv_wts is None:
-        extra_indiv_wts = [0., 0., 0.]
-
-    # Extra weight on axis errors 'l'
-    loss += torch.mean(extra_indiv_wts[0] * err[:, :, :3])
-
-    # Extra weight on axis errors 'm'
-    loss += torch.mean(extra_indiv_wts[1] * err[:, :, 3:6])
-
-    # Extra weight on configuration errors
-    loss += torch.mean(extra_indiv_wts[2] * err[:, :, 6:])
     return loss
 
 
