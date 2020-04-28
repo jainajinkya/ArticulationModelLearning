@@ -175,16 +175,23 @@ def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ax_std=0.0, wt_o
     """ Based on Spatial distance"""
     pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
 
+    # Spatial Distance loss
     dist_err = orientation_difference_bw_plucker_lines(target, pred)**2 + distance_bw_plucker_lines(target, pred)**2
+
+    # Configuration Loss
     conf_err = ((target[:, :, 6:] - pred[:, :, 6:])**2).sum(dim=-1)
+
     err = dist_err + conf_err
     loss = torch.mean(err)
 
-    # Penalize spread of screw axis
-    loss += wt_on_ax_std * (torch.mean(err.std(dim=1)[:6]))
+    # Ensure l_hat has norm 1.
+    loss += torch.mean((torch.norm(pred[:, :, :3], dim=-1) - 1.)**2)
 
     # Ensure orthogonality between l_hat and m
     loss += wt_on_ortho * torch.mean(torch.abs(torch.sum(torch.mul(pred[:, :, :3], pred[:, :, 3:6]), dim=-1)))
+
+    # # Penalize spread of screw axis
+    # loss += wt_on_ax_std * (torch.mean(err.std(dim=1)[:6]))
 
     return loss
 
