@@ -5,9 +5,11 @@ import time
 import matplotlib
 import numpy as np
 import torch
+from torch import autograd
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
 
 from ArticulationModelLearning.magic.lstm.utils import dual_quaternion_to_screw_batch_mode
 
@@ -78,6 +80,8 @@ class ModelTrainer(object):
         start = time.time()
         running_loss = 0
         batches_per_dataset = len(self.trainloader.dataset) / self.trainloader.batch_size
+            
+        #with autograd.detect_anomaly():
         for i, X in enumerate(self.trainloader):
             self.optimizer.zero_grad()
             depth, labels = X['depth'].to(self.device), \
@@ -90,11 +94,15 @@ class ModelTrainer(object):
                 running_loss += -1000
             else:
                 loss.backward()
+                
+                # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
+
                 self.optimizer.step()
                 running_loss += loss.item()
 
-                "Check if loss is becoming Nan "
-                self.plot_grad_flow(self.model.named_parameters())
+                #"Check if loss is becoming Nan "
+                #self.plot_grad_flow(self.model.named_parameters())
 
         stop = time.time()
         print('Epoch %s -  Train  Loss: %.5f Time: %.5f' % (str(epoch).zfill(3),

@@ -7,6 +7,7 @@ from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_L2, articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
     articulation_lstm_loss_L1
+from matplotlib.lines import Line2D
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -118,7 +119,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(network.parameters(),
                                  lr=args.learning_rate)
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
     trainer = ModelTrainer(model=network,
                            train_loader=trainloader,

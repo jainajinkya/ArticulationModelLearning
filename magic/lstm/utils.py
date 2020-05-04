@@ -167,9 +167,9 @@ def distance_bw_plucker_lines(target, prediction):
     dist = torch.zeros_like(norm_cross_prod)
 
     # Checking for Parallel Lines
-    thres = 1e-9
-    if torch.any(norm_cross_prod < thres):
-        zero_idxs = (norm_cross_prod < thres).nonzero(as_tuple=True)
+    thres = 1e-12
+    if torch.any(norm_cross_prod <= thres):
+        zero_idxs = (norm_cross_prod <= thres).nonzero(as_tuple=True)
         scales = torch.norm(prediction[zero_idxs][:, :3], dim=-1) / torch.norm(target[zero_idxs][:, :3], dim=-1)
         dist[zero_idxs] = torch.norm(torch.cross(target[zero_idxs][:, :3], (
                 target[zero_idxs][:, 3:6] - prediction[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / torch.mul(
