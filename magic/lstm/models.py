@@ -47,17 +47,17 @@ class KinematicLSTMv0(nn.Module):
         self.LSTM.flatten_parameters()
 
         RNN_out, (h_n, h_c) = self.LSTM(cnn_embed_seq, None)
-        """ h_n shape (n_layers, batch, hidden_size), h_c shape (n_layers, batch, hidden_size) """
-        """ None represents zero initial hidden state. RNN_out has shape=(batch, time_step, output_size) """
+        """ h_n shape (n_layers, batch, hidden_size), h_c shape (n_layers, batch, hidden_size) 
+        None represents zero initial hidden state. RNN_out has shape=(batch, time_step, output_size) """
 
         # FC layers
-        x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)
+        x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)   # Using Last layer of RNN
         x_rnn = self.fc1(x_rnn)
-        x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
+        x_rnn = nn.Dropout(x_rnn, p=self.drop_p)
         x_rnn = F.relu(x_rnn)
 
         x_rnn = self.fc2(x_rnn)
-        x_rnn = F.dropout(x_rnn, p=self.drop_p/2, training=self.training)
+        x_rnn = nn.Dropout(x_rnn, p=self.drop_p/2)
         x_rnn = F.relu(x_rnn)
 
         x_rnn = self.fc3(x_rnn)
