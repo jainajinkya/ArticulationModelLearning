@@ -117,7 +117,8 @@ if __name__ == "__main__":
         device = torch.device('cpu')
 
     optimizer = torch.optim.Adam(network.parameters(),
-                                 lr=args.learning_rate)
+                                 lr=args.learning_rate,
+                                 weight_decay=1e-3)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
