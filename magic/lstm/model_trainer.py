@@ -79,7 +79,10 @@ class ModelTrainer(object):
 
             # Visualize gradients
             for tag, parm in self.model.named_parameters():
-                self.writer.add_histogram(tag, parm.grad.data.cpu().numpy(), epoch)
+                if torch.isnan(parm.grad).any():
+                    raise ValueError("Encountered NaNs in {} layer".format(tag))
+                else:
+                    self.writer.add_histogram(tag, parm.grad.data.cpu().numpy(), epoch)
 
         # plot losses one more time
         self.plot_losses()
@@ -110,7 +113,8 @@ class ModelTrainer(object):
                 loss.backward()
                 
                 # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
+                #torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
+                torch.nn.utils.clip_grad_value_(self.model.parameters(), 1.)
 
                 self.optimizer.step()
                 running_loss += loss.item()
