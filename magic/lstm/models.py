@@ -171,7 +171,7 @@ class RigidTransformV0(nn.Module):
         return x_rnn
 
 
-def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ax_std=0.0, wt_on_ortho=1., extra_indiv_wts=None):
+def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ortho=1., wt_on_ax_std=0.0):
     """ Based on Spatial distance"""
     pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
 

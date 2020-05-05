@@ -7,7 +7,6 @@ from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_L2, articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
     articulation_lstm_loss_L1
-from matplotlib.lines import Line2D
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")

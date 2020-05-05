@@ -5,7 +5,6 @@ import time
 import matplotlib
 import numpy as np
 import torch
-from torch import autograd
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -81,7 +80,6 @@ class ModelTrainer(object):
         running_loss = 0
         batches_per_dataset = len(self.trainloader.dataset) / self.trainloader.batch_size
             
-        #with autograd.detect_anomaly():
         for i, X in enumerate(self.trainloader):
             self.optimizer.zero_grad()
             depth, labels = X['depth'].to(self.device), \
@@ -100,9 +98,6 @@ class ModelTrainer(object):
 
                 self.optimizer.step()
                 running_loss += loss.item()
-
-                #"Check if loss is becoming Nan "
-                #self.plot_grad_flow(self.model.named_parameters())
 
         stop = time.time()
         print('Epoch %s -  Train  Loss: %.5f Time: %.5f' % (str(epoch).zfill(3),

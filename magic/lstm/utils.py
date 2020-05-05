@@ -158,7 +158,7 @@ def append_all_labels_to_dataset(filename):
     print("Added all transforms to the dataset.")
 
 
-def distance_bw_plucker_lines(target, prediction):
+def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     """ Input shapes Tensors: Batch X #Images X 8
     # Based on formula from Plücker Coordinates for Lines in the Space by Prof. Yan-bin Jia
     # Verified by https://keisan.casio.com/exec/system/1223531414
@@ -167,16 +167,15 @@ def distance_bw_plucker_lines(target, prediction):
     dist = torch.zeros_like(norm_cross_prod)
 
     # Checking for Parallel Lines
-    thres = 1e-12
-    if torch.any(norm_cross_prod <= thres):
-        zero_idxs = (norm_cross_prod <= thres).nonzero(as_tuple=True)
+    if torch.any(norm_cross_prod <= eps):
+        zero_idxs = (norm_cross_prod <= eps).nonzero(as_tuple=True)
         scales = torch.norm(prediction[zero_idxs][:, :3], dim=-1) / torch.norm(target[zero_idxs][:, :3], dim=-1)
         dist[zero_idxs] = torch.norm(torch.cross(target[zero_idxs][:, :3], (
                 target[zero_idxs][:, 3:6] - prediction[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / torch.mul(
             target[zero_idxs][:, :3], target[zero_idxs][:, :3]).sum(dim=-1)
 
     # Skew Lines: Non zero cross product
-    nonzero_idxs = (norm_cross_prod > thres).nonzero(as_tuple=True)
+    nonzero_idxs = (norm_cross_prod > eps).nonzero(as_tuple=True)
     dist[nonzero_idxs] = torch.abs(
         torch.mul(target[nonzero_idxs][:, :3], prediction[nonzero_idxs][:, 3:6]).sum(dim=-1) + torch.mul(
             target[nonzero_idxs][:, 3:6], prediction[nonzero_idxs][:, :3]).sum(dim=-1)) / norm_cross_prod[nonzero_idxs]
