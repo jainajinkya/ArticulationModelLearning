@@ -5,6 +5,7 @@ import time
 import matplotlib
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -26,6 +27,7 @@ class ModelTrainer(object):
                  test_freq,
                  device,
                  obj='microwave',
+                 logs_dir='runs/',
                  ndof=1):
 
         super(ModelTrainer, self).__init__()
@@ -48,16 +50,23 @@ class ModelTrainer(object):
         self.device = device
         self.model.float().to(self.device)
 
+        # Tensorboard
+        self.writer = SummaryWriter(logs_dir + self.name)
+        # self.writer.add_graph(self.model, self.trainloader)
+
     def train(self):
         best_tloss = 1e8
         for epoch in range(self.epochs + 1):
             sys.stdout.flush()
             loss = self.train_epoch(epoch)
             self.losses.append(loss)
+            self.writer.add_scalar('Loss/train', loss.item(), epoch)
+
             if epoch % self.test_freq == 0:
                 tloss = self.test_epoch(epoch)
                 self.tlosses.append(tloss)
                 self.plot_losses()
+                self.writer.add_scalar('Loss/validation', tloss.item(), epoch)
 
                 if tloss < best_tloss:
                     print('saving model.')
@@ -69,10 +78,9 @@ class ModelTrainer(object):
 
         # plot losses one more time
         self.plot_losses()
-
         # re-load the best state dictionary that was saved earlier.
         self.model.load_state_dict(torch.load(net_fname, map_location='cpu'))
-
+        self.writer.close()
         return self.model
 
     def train_epoch(self, epoch):
