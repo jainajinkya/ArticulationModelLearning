@@ -5,7 +5,8 @@ import time
 import matplotlib
 import numpy as np
 import torch
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
+from tensorboardX import SummaryWriter
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -60,13 +61,13 @@ class ModelTrainer(object):
             sys.stdout.flush()
             loss = self.train_epoch(epoch)
             self.losses.append(loss)
-            self.writer.add_scalar('Loss/train', loss.item(), epoch)
+            self.writer.add_scalar('Loss/train', loss, epoch)
 
             if epoch % self.test_freq == 0:
                 tloss = self.test_epoch(epoch)
                 self.tlosses.append(tloss)
                 self.plot_losses()
-                self.writer.add_scalar('Loss/validation', tloss.item(), epoch)
+                self.writer.add_scalar('Loss/validation', tloss, epoch)
 
                 if tloss < best_tloss:
                     print('saving model.')
@@ -80,6 +81,9 @@ class ModelTrainer(object):
         self.plot_losses()
         # re-load the best state dictionary that was saved earlier.
         self.model.load_state_dict(torch.load(net_fname, map_location='cpu'))
+        
+        # export scalar data to JSON for external processing
+        self.writer.export_scalars_to_json("./all_scalars.json")
         self.writer.close()
         return self.model
 
