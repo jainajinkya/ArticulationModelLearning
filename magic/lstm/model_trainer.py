@@ -78,7 +78,7 @@ class ModelTrainer(object):
             self.scheduler.step()
 
             # Visualize gradients
-            for tag, parm in self.model.named_parameters:
+            for tag, parm in self.model.named_parameters():
                 self.writer.add_histogram(tag, parm.grad.data.cpu().numpy(), epoch)
 
         # plot losses one more time

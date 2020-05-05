@@ -27,6 +27,9 @@ class KinematicLSTMv0(nn.Module):
             batch_first=True,
         )
 
+        self.dropout_layer1 = nn.Dropout(p=self.drop_p)
+        self.dropout_layer2 = nn.Dropout(p=self.drop_p/2)
+        
         self.fc1 = nn.Linear(self.lstm_hidden_dim, self.h_fc_dim)
         self.fc2 = nn.Linear(self.h_fc_dim, self.h_fc_dim)
         self.fc3 = nn.Linear(self.h_fc_dim, self.n_output)
@@ -53,11 +56,11 @@ class KinematicLSTMv0(nn.Module):
         # FC layers
         x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)   # Using Last layer of RNN
         x_rnn = self.fc1(x_rnn)
-        x_rnn = nn.Dropout(x_rnn, p=self.drop_p)
+        x_rnn = self.dropout_layer1(x_rnn)
         x_rnn = F.relu(x_rnn)
 
         x_rnn = self.fc2(x_rnn)
-        x_rnn = nn.Dropout(x_rnn, p=self.drop_p/2)
+        x_rnn = self.dropout_layer2(x_rnn)
         x_rnn = F.relu(x_rnn)
 
         x_rnn = self.fc3(x_rnn)
