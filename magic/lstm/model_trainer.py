@@ -119,7 +119,7 @@ class ModelTrainer(object):
                 loss.backward()
                 
                 # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
                 # torch.nn.utils.clip_grad_value_(self.model.parameters(), 1.)
 
                 self.optimizer.step()

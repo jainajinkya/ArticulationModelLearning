@@ -19,6 +19,10 @@ class KinematicLSTMv0(nn.Module):
         self.n_output = n_output
 
         self.resnet = models.resnet18()
+        self.fc1 = nn.Linear(self.lstm_input_dim, self.lstm_input_dim)
+        self.bn1 = nn.BatchNorm1d(self.lstm_input_dim, momentum=0.01)
+        self.dropout_layer1 = nn.Dropout(p=self.drop_p)
+        self.fc2 = nn.Linear(self.lstm_input_dim, self.lstm_input_dim)
 
         self.LSTM = nn.LSTM(
             input_size=self.lstm_input_dim,
@@ -27,21 +31,25 @@ class KinematicLSTMv0(nn.Module):
             batch_first=True,
         )
 
-        self.dropout_layer1 = nn.Dropout(p=self.drop_p)
-        self.dropout_layer2 = nn.Dropout(p=self.drop_p/2)
-        
-        self.fc1 = nn.Linear(self.lstm_hidden_dim, self.h_fc_dim)
-        self.fc2 = nn.Linear(self.h_fc_dim, self.h_fc_dim)
-        self.fc3 = nn.Linear(self.h_fc_dim, self.n_output)
+        self.fc3 = nn.Linear(self.lstm_hidden_dim, self.h_fc_dim)
+        self.bn2 = nn.BatchNorm1d(self.h_fc_dim, momentum=0.01)
+        self.dropout_layer2 = nn.Dropout(p=self.drop_p)
+        self.fc4 = nn.Linear(self.h_fc_dim, self.n_output)
 
     def forward(self, X_3d):
         # X shape: Batch x Sequence x 3 Channels x img_dims
         # Run resnet sequentially on the data to generate embedding sequence
         cnn_embed_seq = []
         for t in range(X_3d.size(1)):
-            X = self.resnet(X_3d[:, t, :, :, :])
-            # X = F.dropout(X, p=self.drop_p, training=self.training)
-            cnn_embed_seq.append(X)
+            x = self.resnet(X_3d[:, t, :, :, :])
+
+            x = x.view(x.size(0), -1)
+            x = self.bn1(self.fc1(x))
+            x = F.relu(x)
+            # x = self.dropout_layer1(x)
+            x = self.fc2(x)
+
+            cnn_embed_seq.append(x)
 
         # swap time and sample dim such that (sample dim, time dim, CNN latent dim)
         cnn_embed_seq = torch.stack(cnn_embed_seq, dim=0).transpose_(0, 1)
@@ -55,15 +63,10 @@ class KinematicLSTMv0(nn.Module):
 
         # FC layers
         x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)   # Using Last layer of RNN
-        x_rnn = self.fc1(x_rnn)
-        x_rnn = self.dropout_layer1(x_rnn)
+        x_rnn = self.bn2(self.fc3(x_rnn))
         x_rnn = F.relu(x_rnn)
-
-        x_rnn = self.fc2(x_rnn)
-        x_rnn = self.dropout_layer2(x_rnn)
-        x_rnn = F.relu(x_rnn)
-
-        x_rnn = self.fc3(x_rnn)
+        # x_rnn = self.dropout_layer2(x_rnn)
+        x_rnn = self.fc4(x_rnn)
         return x_rnn.view(X_3d.size(0), -1)
 
 
