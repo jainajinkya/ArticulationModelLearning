@@ -37,7 +37,7 @@ class KinematicLSTMv0(nn.Module):
         cnn_embed_seq = []
         for t in range(X_3d.size(1)):
             X = self.resnet(X_3d[:, t, :, :, :])
-            X = F.dropout(X, p=self.drop_p, training=self.training)
+            # X = F.dropout(X, p=self.drop_p, training=self.training)
             cnn_embed_seq.append(X)
 
         # swap time and sample dim such that (sample dim, time dim, CNN latent dim)
@@ -51,13 +51,15 @@ class KinematicLSTMv0(nn.Module):
         """ None represents zero initial hidden state. RNN_out has shape=(batch, time_step, output_size) """
 
         # FC layers
-        # x_rnn = self.fc1(RNN_out[:, -1, :])  # choose RNN_out at the last time step
         x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)
         x_rnn = self.fc1(x_rnn)
-        x_rnn = F.relu(x_rnn)
         x_rnn = F.dropout(x_rnn, p=self.drop_p, training=self.training)
-        x_rnn = self.fc2(x_rnn)
         x_rnn = F.relu(x_rnn)
+
+        x_rnn = self.fc2(x_rnn)
+        x_rnn = F.dropout(x_rnn, p=self.drop_p/2, training=self.training)
+        x_rnn = F.relu(x_rnn)
+
         x_rnn = self.fc3(x_rnn)
         return x_rnn.view(X_3d.size(0), -1)
 
