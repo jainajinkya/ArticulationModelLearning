@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     optimizer = torch.optim.Adam(network.parameters(),
                                  lr=args.learning_rate,
-                                 weight_decay=1e-3)
+                                 weight_decay=1e-2)
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
