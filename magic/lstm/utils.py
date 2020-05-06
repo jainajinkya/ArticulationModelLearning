@@ -158,7 +158,7 @@ def append_all_labels_to_dataset(filename):
     print("Added all transforms to the dataset.")
 
 
-def distance_bw_plucker_lines(target, prediction, eps=1e-10):
+def distance_bw_plucker_lines(target, prediction, eps=1e-6):
     """ Input shapes Tensors: Batch X #Images X 8
     # Based on formula from Plücker Coordinates for Lines in the Space by Prof. Yan-bin Jia
     # Verified by https://keisan.casio.com/exec/system/1223531414
