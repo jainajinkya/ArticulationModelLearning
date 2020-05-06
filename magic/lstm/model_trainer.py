@@ -79,9 +79,11 @@ class ModelTrainer(object):
 
             # Visualize gradients
             total_norm = 0.
+            nan_count = 0
             for tag, parm in self.model.named_parameters():
                 if torch.isnan(parm.grad).any():
-                    raise ValueError("Encountered NaNs in {} layer".format(tag))
+                    print("Encountered NaNs in gradients at {} layer".format(tag))
+                    nan_count += 1
                 else:
                     self.writer.add_histogram(tag, parm.grad.data.cpu().numpy(), epoch)
                     param_norm = parm.grad.data.norm(2)
@@ -89,6 +91,8 @@ class ModelTrainer(object):
 
             total_norm = total_norm ** (1. / 2)
             self.writer.add_scalar('Gradient/2-norm', total_norm, epoch)
+            if nan_count > 0:
+                raise ValueError("Encountered NaNs in gradients")
 
         # plot losses one more time
         self.plot_losses()
