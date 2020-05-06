@@ -121,6 +121,9 @@ if __name__ == "__main__":
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
+    ## Debug
+    torch.autograd.set_detect_anomaly(True)
+
     trainer = ModelTrainer(model=network,
                            train_loader=trainloader,
                            test_loader=testloader,
