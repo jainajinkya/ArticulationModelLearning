@@ -195,11 +195,13 @@ def articulation_lstm_loss_spatial_distance(pred, target, wt_on_ortho=1., wt_on_
     # # Penalize spread of screw axis
     # loss += wt_on_ax_std * (torch.mean(err.std(dim=1)[:6]))
 
-    #if torch.isnan(loss):
-    #    print("Distance loss:{}".format(torch.mean(orientation_difference_bw_plucker_lines(target, pred)**2)))
-    #    print("Orientation loss:{}".format(torch.mean(distance_bw_plucker_lines(target, pred)**2)))
-    #    print("Configuration loss:{}".format(torch.mean(conf_err)))
-    #    import pdb; pdb.set_trace()
+    if torch.isnan(loss):
+        print("target: Min: {},  Max{}".format(target.min(), target.max()))
+        print("Prediction: Min: {},  Max{}".format(pred.min(), pred.max()))
+        print("L2 error: {}".format(torch.mean((target - pred)**2)))
+        print("Distance loss:{}".format(torch.mean(orientation_difference_bw_plucker_lines(target, pred)**2)))
+        print("Orientation loss:{}".format(torch.mean(distance_bw_plucker_lines(target, pred)**2)))
+        print("Configuration loss:{}".format(torch.mean(conf_err)))
 
     return loss
 
