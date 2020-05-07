@@ -183,7 +183,7 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     return dist
 
 
-def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
+def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-8):
     """ Input shapes Tensors: Batch X #Images X 8
     range of arccos ins [0, pi)"""
     return torch.acos(torch.clamp(torch.mul(target[:, :, :3], prediction[:, :, :3]).sum(dim=-1) / (

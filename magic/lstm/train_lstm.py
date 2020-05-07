@@ -4,9 +4,9 @@ import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
     ArticulationDatasetV1
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
-from ArticulationModelLearning.magic.lstm.models import KinematicLSTMv0, RigidTransformV0, KinematicLSTMv1, \
-    articulation_lstm_loss_L2, articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
-    articulation_lstm_loss_L1
+from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
+    articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
+    DeepArtModel
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         network = KinematicLSTMv1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
                                   drop_p=args.drop_p, h_fc_dim=256, n_output=8)
 
-    else:   # Default: 'lstm'
+    else:  # Default: 'lstm'
         trainset = ArticulationDataset(ntrain,
                                        args.train_dir,
                                        n_dof=args.ndof)
@@ -94,8 +94,10 @@ if __name__ == "__main__":
         loss_fn = articulation_lstm_loss_spatial_distance
 
         # init model
-        network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                                  drop_p=args.drop_p, h_fc_dim=256, n_output=8)
+        # network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+        #                           drop_p=args.drop_p, h_fc_dim=256, n_output=8)
+        network = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+                               drop_p=args.drop_p, h_fc_dim=256, n_output=8)
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                              shuffle=True, num_workers=args.nwork,
