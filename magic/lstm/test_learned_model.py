@@ -133,11 +133,11 @@ if __name__ == "__main__":
             all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std.cpu()))
 
             # Configurational errors
-            q_err_std, q_err_mean = torch.std_mean(labels[:, :, 6] - y_pred[:, :, 6], dim=-1)
+            q_err_std, q_err_mean = torch.std_mean((labels[:, :, 6] - y_pred[:, :, 6])**2, dim=-1)
             all_q_mean = torch.cat((all_q_mean, q_err_mean.cpu()))
             all_q_std = torch.cat((all_q_std, q_err_std.cpu()))
 
-            d_err_std, d_err_mean = torch.std_mean(labels[:, :, 7] - y_pred[:, :, 7], dim=-1)
+            d_err_std, d_err_mean = torch.std_mean((labels[:, :, 7] - y_pred[:, :, 7])**2, dim=-1)
             all_d_mean = torch.cat((all_d_std, d_err_mean.cpu()))
             all_d_std = torch.cat((all_d_std, d_err_std.cpu()))
 
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     fig = plt.figure(3)
     plt.errorbar(x_axis, all_q_mean.numpy(), all_q_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
-    plt.ylabel("Error")
+    plt.ylabel("L2-error")
     plt.title("Test error in theta")
     plt.tight_layout()
     plt.savefig(output_dir + '/theta_err.png')
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     fig = plt.figure(4)
     plt.errorbar(x_axis, all_d_mean.numpy(), all_d_std.numpy(), capsize=3., capthick=1.)
     plt.xlabel("Test object number")
-    plt.ylabel("Error")
+    plt.ylabel("L2-error")
     plt.title("Test error in d")
     plt.tight_layout()
     plt.savefig(output_dir + '/d_err.png')
