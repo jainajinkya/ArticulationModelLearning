@@ -91,7 +91,7 @@ if __name__ == "__main__":
         real_net_axis = param_dict['axis']
 
         all_dist_err_std, all_dist_err_mean = torch.std_mean(
-            torch.norm(real_axis[:, :, :3] - real_net_axis[:, :, :3], dim=-1), dim=-1).cpu()
+            torch.norm(real_axis[:, :, :3] - real_net_axis[:, :, :3], dim=-1, keepdim=True), dim=-1).cpu()
 
         all_ori_err_std, all_ori_err_mean = torch.zeros_like(all_dist_err_std), torch.zeros_like(all_dist_err_std)
 
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         net_configs = param_dict['config']
 
         all_q_err_std, all_q_err_mean = torch.std_mean(
-            torch.norm(real_configs[:, :, :] - net_configs[:, :, :], dim=-1), dim=-1).cpu()
+            torch.norm(real_configs[:, :, :] - net_configs[:, :, :], dim=-1), dim=-1, keepdim=True).cpu()
 
         x_axis = np.arange(all_q_err_mean.size(0))
         fig = plt.figure(3)
@@ -165,11 +165,13 @@ if __name__ == "__main__":
                 all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std.cpu()))
 
                 # Configurational errors
-                q_err_std, q_err_mean = torch.std_mean(torch.norm(labels[:, :, 6] - y_pred[:, :, 6], dim=-1), dim=-1)
+                q_err_std, q_err_mean = torch.std_mean(
+                    torch.norm(labels[:, :, 6] - y_pred[:, :, 6], dim=-1, keepdim=True), dim=-1)
                 all_q_err_mean = torch.cat((all_q_err_mean, q_err_mean.cpu()))
                 all_q_err_std = torch.cat((all_q_err_std, q_err_std.cpu()))
 
-                d_err_std, d_err_mean = torch.std_mean(torch.norm(labels[:, :, 7] - y_pred[:, :, 7], dim=-1), dim=-1)
+                d_err_std, d_err_mean = torch.std_mean(
+                    torch.norm(labels[:, :, 7] - y_pred[:, :, 7], dim=-1, keepdim=True), dim=-1)
                 all_d_err_mean = torch.cat((all_d_err_std, d_err_mean.cpu()))
                 all_d_err_std = torch.cat((all_d_err_std, d_err_std.cpu()))
 
