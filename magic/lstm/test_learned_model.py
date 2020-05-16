@@ -30,6 +30,7 @@ if __name__ == "__main__":
     parser.add_argument('--dual-quat', action='store_true', default=False, help='Dual quaternion representation or not')
     parser.add_argument('--model-type', type=str, default='ours', help='ours, ben, li')
     parser.add_argument('--load-wts', action='store_true', default=False, help='Should load model wts from prior run?')
+    parser.add_argument('--obj', type=str, default='microwave')
 
     args = parser.parse_args()
 
@@ -50,10 +51,17 @@ if __name__ == "__main__":
 
     if args.model_type == 'ben':
         print("Testing Model: Ben et al.")
+        bounds = np.load(os.path.join(args.test_dir, 'bounds.npy'))
+        keep_columns = np.load('keep_columns_' + args.obj)
+        one_columns = np.load('one_columns_' + args.obj)
         testset = MixtureDataset(ntest,
                                  args.test_dir,
                                  n_dof=args.ndof,
-                                 normalize=True)
+                                 normalize=True,
+                                 bounds=bounds,
+                                 keep_columns=keep_columns,
+                                 one_columns=one_columns
+                                 )
 
         best_model = KinematicMDNv3(n_gaussians=20,
                                     out_features=testset.labels.shape[1])
@@ -83,7 +91,6 @@ if __name__ == "__main__":
                                testloader.dataset.one_columns)
 
         # interpret and convert to real.
-        bounds = np.load(os.path.join(args.test_dir, 'bounds.npy'))
         ground_truth_params = convert_dict_to_real(interpret_labels(labels, args.ndof), bounds, args.ndof)
         param_dict = convert_dict_to_real(interpret_labels(output, args.ndof), bounds, args.ndof)
 
