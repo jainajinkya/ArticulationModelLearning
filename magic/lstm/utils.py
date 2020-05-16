@@ -5,9 +5,11 @@ import h5py
 import numpy as np
 import torch
 import transforms3d as tf3d
+
 from SyntheticArticulatedData.generation.utils import change_frames
 
 
+# Dual Quaternion utils
 def dual_quaternion_to_vecQuat_form(dq):
     trans = dq.translation()
     quat = dq.rotation().data  # expect x,y,z,w
@@ -53,6 +55,7 @@ def tensor_to_dual_quat(dq):
     return dq1
 
 
+# Generic Utils
 def quat_as_wxyz(q):
     # Assume q in xyzw
     new_q = np.array([q[3], q[0], q[1], q[2]])
@@ -191,7 +194,7 @@ def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
                                   min=-1, max=1))
 
 
-## Plotting Utils
+# Plotting Utils
 def set_axes_radius(ax, origin, radius):
     ax.set_xlim3d([origin[0] - radius, origin[0] + radius])
     ax.set_ylim3d([origin[1] - radius, origin[1] + radius])
