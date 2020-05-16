@@ -53,8 +53,8 @@ if __name__ == "__main__":
     if args.model_type == 'ben':
         print("Testing Model: Ben et al.")
         bounds = np.load(os.path.join(args.test_dir, 'bounds.npy'))
-        keep_columns = np.load(os.path.abspath('./keep_columns_' + args.obj))
-        one_columns = np.load(os.path.abspath('./one_columns_' + args.obj))
+        keep_columns = np.load(os.path.abspath('../GeneralizingKinematics/keep_columns_' + args.obj + '.npy'))
+        one_columns = np.load(os.path.abspath('../GeneralizingKinematics/one_columns_' + args.obj + '.npy'))
         testset = MixtureDataset(ntest,
                                  args.test_dir,
                                  n_dof=args.ndof,
@@ -99,7 +99,9 @@ if __name__ == "__main__":
         real_net_axis = param_dict['axis']
 
         all_dist_err_std, all_dist_err_mean = torch.std_mean(
-            torch.norm(real_axis[:, :, :3] - real_net_axis[:, :, :3], dim=-1, keepdim=True), dim=-1).cpu()
+            torch.norm(real_axis[:, :, :3] - real_net_axis[:, :, :3], dim=-1, keepdim=True), dim=-1)
+        all_dist_err_std = all_dist_err_std.cpu()
+        all_dist_err_mean = all_dist_err_mean.cpu()
 
         all_ori_err_std, all_ori_err_mean = torch.zeros_like(all_dist_err_std), torch.zeros_like(all_dist_err_std)
 
@@ -108,7 +110,9 @@ if __name__ == "__main__":
         net_configs = param_dict['config']
 
         all_q_err_std, all_q_err_mean = torch.std_mean(
-            torch.norm(real_configs[:, :, :] - net_configs[:, :, :], dim=-1), dim=-1, keepdim=True).cpu()
+            torch.norm(real_configs[:, :, :] - net_configs[:, :, :], dim=-1), dim=-1, keepdim=True)
+        all_q_err_std = all_q_err_std.cpu()
+        all_q_err_mean = all_q_err_mean.cpu()
 
         x_axis = np.arange(all_q_err_mean.size(0))
         fig = plt.figure(3)
