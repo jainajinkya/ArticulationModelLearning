@@ -21,7 +21,7 @@ class ArticulationDataset(Dataset):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
-        # self.labels_data = None
+        self.labels_data = None
         self.length = ntrain
         self.n_dof = n_dof
 
@@ -29,12 +29,13 @@ class ArticulationDataset(Dataset):
         return self.length
 
     def __getitem__(self, idx):
-        # if self.labels_data is None:
-        #     self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
+        if self.labels_data is None:
+            self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
 
-        with h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r') as labels_data:
-            # One Sample for us corresponds to one instantiation of an object type
-            obj_data = labels_data['obj_' + str(idx).zfill(6)]
+        # with h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r') as labels_data:
+
+        # One Sample for us corresponds to one instantiation of an object type
+        obj_data = self.labels_data['obj_' + str(idx).zfill(6)]
 
         # Load depth image
         depth_imgs = torch.tensor(obj_data['depth_imgs'])
