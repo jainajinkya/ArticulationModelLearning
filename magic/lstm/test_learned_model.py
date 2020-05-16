@@ -114,7 +114,7 @@ if __name__ == "__main__":
         all_q_err_std = all_q_err_std.squeeze_(dim=-1).cpu().numpy()
         all_q_err_mean = all_q_err_mean.squeeze_(dim=-1).cpu().numpy()
 
-        x_axis = np.arange(all_q_err_mean.size(0))
+        x_axis = np.arange(np.shape(all_q_err_mean)[0])
         fig = plt.figure(3)
         plt.errorbar(x_axis, all_q_err_mean, all_q_err_std, capsize=3., capthick=1., ls='none')
         plt.xlabel("Test object number")
