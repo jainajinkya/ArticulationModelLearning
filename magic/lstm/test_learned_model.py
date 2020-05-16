@@ -53,8 +53,8 @@ if __name__ == "__main__":
     if args.model_type == 'ben':
         print("Testing Model: Ben et al.")
         bounds = np.load(os.path.join(args.test_dir, 'bounds.npy'))
-        keep_columns = np.load('keep_columns_' + args.obj)
-        one_columns = np.load('one_columns_' + args.obj)
+        keep_columns = np.load(os.path.abspath('./keep_columns_' + args.obj))
+        one_columns = np.load(os.path.abspath('./one_columns_' + args.obj))
         testset = MixtureDataset(ntest,
                                  args.test_dir,
                                  n_dof=args.ndof,
