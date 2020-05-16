@@ -100,8 +100,8 @@ if __name__ == "__main__":
 
         all_dist_err_std, all_dist_err_mean = torch.std_mean(
             torch.norm(real_axis[:, :, :3] - real_net_axis[:, :, :3], dim=-1, keepdim=True), dim=-1)
-        all_dist_err_std = all_dist_err_std.cpu()
-        all_dist_err_mean = all_dist_err_mean.cpu()
+        all_dist_err_std = all_dist_err_std.squeeze_(dim=-1).cpu()
+        all_dist_err_mean = all_dist_err_mean.squeeze_(dim=-1).cpu()
 
         all_ori_err_std, all_ori_err_mean = torch.zeros_like(all_dist_err_std), torch.zeros_like(all_dist_err_std)
 
@@ -111,12 +111,12 @@ if __name__ == "__main__":
 
         all_q_err_std, all_q_err_mean = torch.std_mean(
             torch.norm(real_configs[:, :, :] - net_configs[:, :, :], dim=-1), dim=-1, keepdim=True)
-        all_q_err_std = all_q_err_std.cpu()
-        all_q_err_mean = all_q_err_mean.cpu()
+        all_q_err_std = all_q_err_std.squeeze_(dim=-1).cpu().numpy()
+        all_q_err_mean = all_q_err_mean.squeeze_(dim=-1).cpu().numpy()
 
         x_axis = np.arange(all_q_err_mean.size(0))
         fig = plt.figure(3)
-        plt.errorbar(x_axis, all_q_err_mean.numpy(), all_q_err_std.numpy(), capsize=3., capthick=1., ls='none')
+        plt.errorbar(x_axis, all_q_err_mean, all_q_err_std, capsize=3., capthick=1., ls='none')
         plt.xlabel("Test object number")
         plt.ylabel("Error in Config")
         plt.title("Test error in Configurations")
