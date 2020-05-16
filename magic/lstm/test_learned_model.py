@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument('--model-dir', type=str, default='models/')
     parser.add_argument('--model-name', type=str, default='test_lstm')
     parser.add_argument('--test-dir', type=str, default='../data/test/microwave/')
-    parser.add_argument('--output-dir', type=str, default='plots/')
+    parser.add_argument('--output-dir', type=str, default='./plots/')
     parser.add_argument('--ntest', type=int, default=1, help='number of test samples (n_object_instants)')
     parser.add_argument('--aug-multi', type=int, default=120, help='Multiplier for data augmentation')
     parser.add_argument('--ndof', type=int, default=1, help='how many degrees of freedom in the object class?')
