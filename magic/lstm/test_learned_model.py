@@ -43,6 +43,7 @@ if __name__ == "__main__":
     all_dist_err_std = torch.empty(0)
 
     output_dir = os.path.join(os.path.abspath(args.output_dir), args.model_type, args.model_name)
+    os.makedirs(output_dir, exist_ok=True)
 
     if torch.cuda.is_available():
         device = torch.device(args.device)
