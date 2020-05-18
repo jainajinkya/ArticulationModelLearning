@@ -153,11 +153,13 @@ if __name__ == "__main__":
         binwidth = 0.005
         counts, bins = np.histogram(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
         bins = 0.5 * (bins[:-1] + bins[1:])
-        fig1 = go.Figure(data=[
-            go.Histogram(x=bins, y=counts, labels={'x': "Config Error (rad)", 'y': "% test objects"},
-                         histnorm='percent', title='Histogram of mean test errors in theta')])
+        fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+        fig1.update_layout(
+            title_text='Histogram of mean test errors in theta',  # title of plot
+            xaxis_title_text='Config Error (rad)',  # xaxis label
+            yaxis_title_text='% test objects',  # yaxis label
+            )
         fig1.write_image(output_dir + '/theta_err_hist.png')
-
 
     elif args.model_type == 'li':
         print("Testing Model: Li et al.")
@@ -251,9 +253,12 @@ if __name__ == "__main__":
         binwidth = 0.005
         counts, bins = np.histogram(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
         bins = 0.5 * (bins[:-1] + bins[1:])
-        fig1 = go.Figure(data=[
-            go.Histogram(x=bins, y=counts, labels={'x': "Theta Error (rad)", 'y': "% test objects"},
-                         histnorm='percent', title='Histogram of mean test errors in theta')])
+        fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+        fig1.update_layout(
+            title_text='Histogram of mean test errors in theta',  # title of plot
+            xaxis_title_text='Config Error (rad)',  # xaxis label
+            yaxis_title_text='% test objects',  # yaxis label
+            )
         fig1.write_image(output_dir + '/theta_err_hist.png')
 
         fig = plt.figure(4)
@@ -280,9 +285,12 @@ if __name__ == "__main__":
         binwidth = 0.005
         counts, bins = np.histogram(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
         bins = 0.5 * (bins[:-1] + bins[1:])
-        fig1 = go.Figure(data=[
-            go.Histogram(x=bins, y=counts, labels={'x': "Config Error (cm)", 'y': "% test objects"},
-                         histnorm='percent', title='Histogram of mean test errors in d')])
+        fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+        fig1.update_layout(
+            title_text='Histogram of mean test errors in d',  # title of plot
+            xaxis_title_text='Config Error (cm)',  # xaxis label
+            yaxis_title_text='% test objects',  # yaxis label
+            )
         fig1.write_image(output_dir + '/d_err_hist.png')
 
         # # Storing data for particle filter analysis
@@ -319,9 +327,12 @@ if __name__ == "__main__":
     binwidth = 0.05
     counts, bins = np.histogram(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
     bins = 0.5 * (bins[:-1] + bins[1:])
-    fig1 = go.Figure(data=[
-        go.Histogram(x=bins, y=counts, labels={'x': "Orientation error (rad)", 'y': "% test objects"},
-                     histnorm='percent', title='Histogram of mean test errors in screw axis orientation')])
+    fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+    fig1.update_layout(
+        title_text='Histogram of mean test errors in screw axis orientation',  # title of plot
+        xaxis_title_text='Orientation error (rad)',  # xaxis label
+        yaxis_title_text='% test objects',  # yaxis label
+    )
     fig1.write_image(output_dir + '/orientation_test_error_hist.png')
 
     fig = plt.figure(2)
@@ -349,7 +360,10 @@ if __name__ == "__main__":
     binwidth = 0.01
     counts, bins = np.histogram(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
     bins = 0.5 * (bins[:-1] + bins[1:])
-    fig1 = go.Figure(data=[
-        go.Histogram(x=bins, y=counts, labels={'x': "Spatial distance error (cm)", 'y': "% test objects"},
-                     histnorm='percent', title='Histogram of mean test errors in spatial distance')])
+    fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+    fig1.update_layout(
+        title_text='Histogram of mean test errors in spatial distance',  # title of plot
+        xaxis_title_text='Spatial distance error (cm)',  # xaxis label
+        yaxis_title_text='% test objects',  # yaxis label
+    )
     fig1.write_image(output_dir + '/distance_test_error_hist.png')
