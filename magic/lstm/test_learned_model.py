@@ -1,13 +1,14 @@
 import argparse
 import os
 
-import GeneralizingKinematics.magic.mixture.mdn as mdn
-import matplotlib
+# import matplotlib
 import numpy as np
 import torch
+
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
 from ArticulationModelLearning.magic.lstm.models import DeepArtModel
 from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors
+from GeneralizingKinematics.magic.mixture import mdn
 from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
@@ -85,17 +86,17 @@ if __name__ == "__main__":
 
                 # expand labels and output back to full dataset size
                 output = expand_labels(testloader.dataset.full_labels,
-                                    output,
-                                    testloader.dataset.keep_columns,
-                                    testloader.dataset.one_columns)
+                                       output,
+                                       testloader.dataset.keep_columns,
+                                       testloader.dataset.one_columns)
 
                 labels = expand_labels(testloader.dataset.full_labels,
-                                    labels,
-                                    testloader.dataset.keep_columns,
-                                    testloader.dataset.one_columns)
-                
-                all_labels[i*labels.shape[0]:(i+1)*labels.shape[0], :] = labels
-                all_output[i*labels.shape[0]:(i+1)*labels.shape[0], :] = output
+                                       labels,
+                                       testloader.dataset.keep_columns,
+                                       testloader.dataset.one_columns)
+
+                all_labels[i * labels.shape[0]:(i + 1) * labels.shape[0], :] = labels
+                all_output[i * labels.shape[0]:(i + 1) * labels.shape[0], :] = output
 
         # interpret and convert to real.
         ground_truth_params = convert_dict_to_real(interpret_labels(all_labels, args.ndof), bounds, args.ndof)
@@ -119,7 +120,7 @@ if __name__ == "__main__":
         all_ori_err_std = all_ori_err_std.squeeze_().cpu()
 
         # Configuration error
-        real_configs = ground_truth_params['config'].view(-1, args.ndof, n_imgs_per_obj, config_len)   # Config len 1
+        real_configs = ground_truth_params['config'].view(-1, args.ndof, n_imgs_per_obj, config_len)  # Config len 1
         net_configs = param_dict['config'].view(-1, args.ndof, n_imgs_per_obj, config_len)
 
         all_q_err_std, all_q_err_mean = torch.std_mean(
@@ -135,6 +136,17 @@ if __name__ == "__main__":
         plt.title("Test error in Configurations")
         plt.tight_layout()
         plt.savefig(output_dir + '/theta_err.png')
+        plt.close(fig)
+        
+        fig = plt.figure(31)
+        data = all_q_err_mean.numpy()
+        binwidth = 0.005
+        plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+        plt.xlabel("Error (rad)")
+        plt.ylabel("No. of test objects")
+        plt.title("Histogram of mean test errors in theta")
+        plt.tight_layout()
+        plt.savefig(output_dir + '/theta_err_hist.png')
         plt.close(fig)
 
     elif args.model_type == 'li':
@@ -188,7 +200,7 @@ if __name__ == "__main__":
                 dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred), dim=-1)
                 all_dist_err_mean = torch.cat((all_dist_err_mean, dist_err_mean.cpu()))
                 all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std.cpu()))
-                
+
                 # Configurational errors
                 q_err_std, q_err_mean = torch.std_mean(torch.abs(labels[:, :, 6] - y_pred[:, :, 6]), dim=-1)
                 all_q_err_mean = torch.cat((all_q_err_mean, q_err_mean.cpu()))
@@ -215,6 +227,17 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/theta_err.png')
         plt.close(fig)
 
+        fig = plt.figure(31)
+        data = all_q_err_mean.numpy()
+        binwidth = 0.005
+        plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+        plt.xlabel("Error (rad)")
+        plt.ylabel("No. of test objects")
+        plt.title("Histogram of mean test errors in theta")
+        plt.tight_layout()
+        plt.savefig(output_dir + '/theta_err_hist.png')
+        plt.close(fig)
+
         fig = plt.figure(4)
         plt.errorbar(x_axis, all_d_err_mean.numpy(), all_d_err_std.numpy(), capsize=3., capthick=1., ls='none')
         plt.xlabel("Test object number")
@@ -222,6 +245,17 @@ if __name__ == "__main__":
         plt.title("Test error in d")
         plt.tight_layout()
         plt.savefig(output_dir + '/d_err.png')
+        plt.close(fig)
+
+        fig = plt.figure(41)
+        data = all_d_err_mean.numpy()
+        binwidth = 0.005
+        plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+        plt.xlabel("Error (m)")
+        plt.ylabel("No. of test objects")
+        plt.title("Histogram of mean test errors in d")
+        plt.tight_layout()
+        plt.savefig(output_dir + '/d_err_hist.png')
         plt.close(fig)
 
         # # Storing data for particle filter analysis
@@ -232,6 +266,7 @@ if __name__ == "__main__":
     """ Common Plots"""
     # Plot variation of screw axis
     x_axis = np.arange(all_ori_err_mean.size(0))
+
     fig = plt.figure(1)
     plt.errorbar(x_axis, all_ori_err_mean.numpy(), all_ori_err_std.numpy(), marker='o', mfc='blue', ms=4., capsize=3.,
                  capthick=1., ls='none')
@@ -242,6 +277,17 @@ if __name__ == "__main__":
     plt.savefig(output_dir + '/orientation_test_error.png')
     plt.close(fig)
 
+    fig = plt.figure(11)
+    data = all_ori_err_mean.numpy()
+    binwidth = 0.05
+    plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+    plt.xlabel("Orientation error (rad)")
+    plt.ylabel("No. of test objects")
+    plt.title("Histogram of mean test errors in screw axis orientation")
+    plt.tight_layout()
+    plt.savefig(output_dir + '/orientation_test_error_hist.png')
+    plt.close(fig)
+
     fig = plt.figure(2)
     plt.errorbar(x_axis, all_dist_err_mean.numpy(), all_dist_err_std.numpy(), marker='o', ms=4, mfc='blue', capsize=3.,
                  capthick=1., ls='none')
@@ -250,4 +296,15 @@ if __name__ == "__main__":
     plt.title("Test error in spatial distance")
     plt.tight_layout()
     plt.savefig(output_dir + '/distance_test_error.png')
+    plt.close(fig)
+
+    fig = plt.figure(21)
+    data = all_dist_err_mean.numpy()
+    binwidth = 0.05
+    plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+    plt.xlabel("Spatial distance error (m)")
+    plt.ylabel("No. of test objects")
+    plt.title("Histogram of mean test errors in spatial distance")
+    plt.tight_layout()
+    plt.savefig(output_dir + '/distance_test_error_hist.png')
     plt.close(fig)
