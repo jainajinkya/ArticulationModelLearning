@@ -81,12 +81,12 @@ if __name__ == "__main__":
         output = mdn.sample(pi, sigma, mu)
 
         # expand labels and output back to full dataset size
-        output = expand_labels(testloader.dataset.full_labels[:len(labels)],
+        output = expand_labels(testloader.dataset.full_labels,
                                output,
                                testloader.dataset.keep_columns,
                                testloader.dataset.one_columns)
 
-        labels = expand_labels(testloader.dataset.full_labels[:len(labels)],
+        labels = expand_labels(testloader.dataset.full_labels,
                                labels,
                                testloader.dataset.keep_columns,
                                testloader.dataset.one_columns)

@@ -194,6 +194,7 @@ def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
 
 
 def quaternion_inner_product(q, r):
+    import pdb; pdb.set_trace()
     assert q.shape[-1] == 4
     assert r.shape[-1] == 4
     original_shape = q.shape
@@ -201,6 +202,7 @@ def quaternion_inner_product(q, r):
 
 
 def difference_between_quaternions_tensors(q1, q2):
+    import pdb; pdb.set_trace()
     return torch.acos(2 * quaternion_inner_product(q1, q2) ** 2 - 1)
 
 
