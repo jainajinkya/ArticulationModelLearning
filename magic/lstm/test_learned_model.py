@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
 from ArticulationModelLearning.magic.lstm.models import DeepArtModel
-from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines
+from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors
 from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
@@ -95,28 +95,32 @@ if __name__ == "__main__":
         ground_truth_params = convert_dict_to_real(interpret_labels(labels, args.ndof), bounds, args.ndof)
         param_dict = convert_dict_to_real(interpret_labels(output, args.ndof), bounds, args.ndof)
 
-        real_axis = ground_truth_params['axis']
-        real_net_axis = param_dict['axis']
+        n_imgs_per_obj = 16
+        axis_len = 7
+        config_len = 1
+
+        real_axis = ground_truth_params['axis'].view(-1, args.ndof, n_imgs_per_obj, axis_len)  # Axis len 7
+        real_net_axis = param_dict['axis'].view(-1, args.ndof, n_imgs_per_obj, axis_len)
 
         import pdb; pdb.set_trace()
         all_dist_err_std, all_dist_err_mean = torch.std_mean(
-            torch.norm(real_axis[:, :, :3] - real_net_axis[:, :, :3], dim=-1, keepdim=True), dim=-1)
-        all_dist_err_std = all_dist_err_std.squeeze_(dim=-1).cpu()
-        all_dist_err_mean = all_dist_err_mean.squeeze_(dim=-1).cpu()
+            torch.norm(real_axis[:, :, :, :3] - real_net_axis[:, :, :, :3], dim=-1), dim=-1)
+        all_dist_err_std = all_dist_err_std.cpu()
+        all_dist_err_mean = all_dist_err_mean.cpu()
 
         all_ori_err_std, all_ori_err_mean = torch.std_mean(
-            difference_between_quaternions_tensors(real_axis[:, :, 3:7], real_net_axis[:, :, 3:7]), dim=-1)
-        all_ori_err_mean = all_dist_err_mean.cpu()
+            difference_between_quaternions_tensors(real_axis[:, :, :, 3:7], real_net_axis[:, :, :, 3:7]), dim=-1)
+        all_ori_err_mean = all_ori_err_mean.cpu()
         all_ori_err_std = all_ori_err_std.cpu()
 
         # Configuration error
-        real_configs = ground_truth_params['config']
-        net_configs = param_dict['config']
+        real_configs = ground_truth_params['config'].view(-1, args.ndof, n_imgs_per_obj, config_len)   # Config len 1
+        net_configs = param_dict['config'].view(-1, args.ndof, n_imgs_per_obj, config_len)
 
         all_q_err_std, all_q_err_mean = torch.std_mean(
-            torch.norm(real_configs[:, :, :] - net_configs[:, :, :], dim=-1, keepdim=True), dim=-1)
-        all_q_err_std = all_q_err_std.squeeze_(dim=-1).cpu().numpy()
-        all_q_err_mean = all_q_err_mean.squeeze_(dim=-1).cpu().numpy()
+            torch.norm(real_configs[:, :, :, :] - net_configs[:, :, :, :], dim=-1), dim=-1)
+        all_q_err_std = all_q_err_std.cpu().numpy()
+        all_q_err_mean = all_q_err_mean.cpu().numpy()
 
         x_axis = np.arange(np.shape(all_q_err_mean)[0])
         fig = plt.figure(3)
