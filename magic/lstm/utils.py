@@ -5,7 +5,6 @@ import h5py
 import numpy as np
 import torch
 import transforms3d as tf3d
-
 from SyntheticArticulatedData.generation.utils import change_frames
 
 
@@ -175,14 +174,14 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
         scales = torch.norm(prediction[zero_idxs][:, :3], dim=-1) / torch.norm(target[zero_idxs][:, :3], dim=-1) + eps
         dist[zero_idxs] = torch.norm(torch.cross(target[zero_idxs][:, :3], (
                 target[zero_idxs][:, 3:6] - prediction[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / (
-                                      torch.mul(target[zero_idxs][:, :3], target[zero_idxs][:, :3]).sum(dim=-1) + eps)
+                                  torch.mul(target[zero_idxs][:, :3], target[zero_idxs][:, :3]).sum(dim=-1) + eps)
 
     # Skew Lines: Non zero cross product
     nonzero_idxs = (norm_cross_prod > eps).nonzero(as_tuple=True)
     dist[nonzero_idxs] = torch.abs(
         torch.mul(target[nonzero_idxs][:, :3], prediction[nonzero_idxs][:, 3:6]).sum(dim=-1) + torch.mul(
             target[nonzero_idxs][:, 3:6], prediction[nonzero_idxs][:, :3]).sum(dim=-1)) / (
-                                     norm_cross_prod[nonzero_idxs] + eps)
+                                 norm_cross_prod[nonzero_idxs] + eps)
     return dist
 
 
@@ -192,6 +191,17 @@ def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
     return torch.acos(torch.clamp(torch.mul(target[:, :, :3], prediction[:, :, :3]).sum(dim=-1) / (
             torch.norm(target[:, :, :3], dim=-1) * torch.norm(prediction[:, :, :3], dim=-1) + eps),
                                   min=-1, max=1))
+
+
+def quaternion_inner_product(q, r):
+    assert q.shape[-1] == 4
+    assert r.shape[-1] == 4
+    original_shape = q.shape
+    return torch.bmm(q.view(-1, 1, 4), r.view(-1, 4, 1)).view(original_shape)
+
+
+def difference_between_quaternions_tensors(q1, q2):
+    return torch.acos(2 * quaternion_inner_product(q1, q2) ** 2 - 1)
 
 
 # Plotting Utils
