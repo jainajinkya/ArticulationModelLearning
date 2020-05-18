@@ -200,8 +200,8 @@ def quaternion_inner_product(q, r):
     return torch.bmm(q.view(-1, 1, 4), r.view(-1, 4, 1)).view(original_shape[:-1])
 
 
-def difference_between_quaternions_tensors(q1, q2):
-    return torch.acos(2 * quaternion_inner_product(q1, q2) ** 2 - 1)
+def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
+    return torch.acos(torch.clamp(2 * quaternion_inner_product(q1, q2) ** 2 - 1, -1 + eps, 1 - eps))
 
 
 # Plotting Utils

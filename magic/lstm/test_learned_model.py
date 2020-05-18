@@ -1,7 +1,7 @@
 import argparse
 import os
 
-# import matplotlib
+import matplotlib
 import numpy as np
 import torch
 
@@ -125,12 +125,12 @@ if __name__ == "__main__":
 
         all_q_err_std, all_q_err_mean = torch.std_mean(
             torch.norm(real_configs[:, :, :, :] - net_configs[:, :, :, :], dim=-1), dim=-1)
-        all_q_err_std = all_q_err_std.squeeze_().cpu().numpy()
-        all_q_err_mean = all_q_err_mean.squeeze_().cpu().numpy()
+        all_q_err_std = all_q_err_std.squeeze_().cpu()
+        all_q_err_mean = all_q_err_mean.squeeze_().cpu()
 
         x_axis = np.arange(np.shape(all_q_err_mean)[0])
         fig = plt.figure(3)
-        plt.errorbar(x_axis, all_q_err_mean, all_q_err_std, capsize=3., capthick=1., ls='none')
+        plt.errorbar(x_axis, all_q_err_mean.numpy(), all_q_err_std.numpy(), capsize=3., capthick=1., ls='none')
         plt.xlabel("Test object number")
         plt.ylabel("Error in Config")
         plt.title("Test error in Configurations")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         fig = plt.figure(31)
         data = all_q_err_mean.numpy()
         binwidth = 0.005
-        plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+        plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
         plt.xlabel("Error (rad)")
         plt.ylabel("No. of test objects")
         plt.title("Histogram of mean test errors in theta")
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     fig = plt.figure(11)
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+    plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
     plt.xlabel("Orientation error (rad)")
     plt.ylabel("No. of test objects")
     plt.title("Histogram of mean test errors in screw axis orientation")
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     fig = plt.figure(21)
     data = all_dist_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+    plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
     plt.xlabel("Spatial distance error (m)")
     plt.ylabel("No. of test objects")
     plt.title("Histogram of mean test errors in spatial distance")
