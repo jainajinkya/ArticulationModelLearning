@@ -73,27 +73,33 @@ if __name__ == "__main__":
         testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                                  shuffle=False, num_workers=args.nwork,
                                                  pin_memory=True)
+
+        all_labels = torch.zeros(args.ntest, testloader.dataset.full_labels.shape[1])
+        all_output = torch.zeros(args.ntest, testloader.dataset.full_labels.shape[1])
+
         with torch.no_grad():
-            for X in testloader:
+            for i, X in enumerate(testloader):
                 depth, labels = X['depth'].to(device), X['label'].to(device)
                 pi, sigma, mu = best_model(depth)
+                output = mdn.sample(pi, sigma, mu)
 
-        output = mdn.sample(pi, sigma, mu)
+                # expand labels and output back to full dataset size
+                output = expand_labels(testloader.dataset.full_labels,
+                                    output,
+                                    testloader.dataset.keep_columns,
+                                    testloader.dataset.one_columns)
 
-        # expand labels and output back to full dataset size
-        output = expand_labels(testloader.dataset.full_labels,
-                               output,
-                               testloader.dataset.keep_columns,
-                               testloader.dataset.one_columns)
-
-        labels = expand_labels(testloader.dataset.full_labels,
-                               labels,
-                               testloader.dataset.keep_columns,
-                               testloader.dataset.one_columns)
+                labels = expand_labels(testloader.dataset.full_labels,
+                                    labels,
+                                    testloader.dataset.keep_columns,
+                                    testloader.dataset.one_columns)
+                
+                all_labels[i*labels.shape[0]:(i+1)*labels.shape[0], :] = labels
+                all_output[i*labels.shape[0]:(i+1)*labels.shape[0], :] = output
 
         # interpret and convert to real.
-        ground_truth_params = convert_dict_to_real(interpret_labels(labels, args.ndof), bounds, args.ndof)
-        param_dict = convert_dict_to_real(interpret_labels(output, args.ndof), bounds, args.ndof)
+        ground_truth_params = convert_dict_to_real(interpret_labels(all_labels, args.ndof), bounds, args.ndof)
+        param_dict = convert_dict_to_real(interpret_labels(all_output, args.ndof), bounds, args.ndof)
 
         n_imgs_per_obj = 16
         axis_len = 7
@@ -102,16 +108,15 @@ if __name__ == "__main__":
         real_axis = ground_truth_params['axis'].view(-1, args.ndof, n_imgs_per_obj, axis_len)  # Axis len 7
         real_net_axis = param_dict['axis'].view(-1, args.ndof, n_imgs_per_obj, axis_len)
 
-        import pdb; pdb.set_trace()
         all_dist_err_std, all_dist_err_mean = torch.std_mean(
             torch.norm(real_axis[:, :, :, :3] - real_net_axis[:, :, :, :3], dim=-1), dim=-1)
-        all_dist_err_std = all_dist_err_std.cpu()
-        all_dist_err_mean = all_dist_err_mean.cpu()
+        all_dist_err_std = all_dist_err_std.squeeze_().cpu()
+        all_dist_err_mean = all_dist_err_mean.squeeze_().cpu()
 
         all_ori_err_std, all_ori_err_mean = torch.std_mean(
             difference_between_quaternions_tensors(real_axis[:, :, :, 3:7], real_net_axis[:, :, :, 3:7]), dim=-1)
-        all_ori_err_mean = all_ori_err_mean.cpu()
-        all_ori_err_std = all_ori_err_std.cpu()
+        all_ori_err_mean = all_ori_err_mean.squeeze_().cpu()
+        all_ori_err_std = all_ori_err_std.squeeze_().cpu()
 
         # Configuration error
         real_configs = ground_truth_params['config'].view(-1, args.ndof, n_imgs_per_obj, config_len)   # Config len 1
@@ -119,8 +124,8 @@ if __name__ == "__main__":
 
         all_q_err_std, all_q_err_mean = torch.std_mean(
             torch.norm(real_configs[:, :, :, :] - net_configs[:, :, :, :], dim=-1), dim=-1)
-        all_q_err_std = all_q_err_std.cpu().numpy()
-        all_q_err_mean = all_q_err_mean.cpu().numpy()
+        all_q_err_std = all_q_err_std.squeeze_().cpu().numpy()
+        all_q_err_mean = all_q_err_mean.squeeze_().cpu().numpy()
 
         x_axis = np.arange(np.shape(all_q_err_mean)[0])
         fig = plt.figure(3)
@@ -183,15 +188,13 @@ if __name__ == "__main__":
                 dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred), dim=-1)
                 all_dist_err_mean = torch.cat((all_dist_err_mean, dist_err_mean.cpu()))
                 all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std.cpu()))
-
+                
                 # Configurational errors
-                q_err_std, q_err_mean = torch.std_mean(
-                    torch.norm(labels[:, :, 6] - y_pred[:, :, 6], dim=-1, keepdim=True), dim=-1)
+                q_err_std, q_err_mean = torch.std_mean(torch.abs(labels[:, :, 6] - y_pred[:, :, 6]), dim=-1)
                 all_q_err_mean = torch.cat((all_q_err_mean, q_err_mean.cpu()))
                 all_q_err_std = torch.cat((all_q_err_std, q_err_std.cpu()))
 
-                d_err_std, d_err_mean = torch.std_mean(
-                    torch.norm(labels[:, :, 7] - y_pred[:, :, 7], dim=-1, keepdim=True), dim=-1)
+                d_err_std, d_err_mean = torch.std_mean(torch.abs(labels[:, :, 7] - y_pred[:, :, 7]), dim=-1)
                 all_d_err_mean = torch.cat((all_d_err_std, d_err_mean.cpu()))
                 all_d_err_std = torch.cat((all_d_err_std, d_err_std.cpu()))
 
