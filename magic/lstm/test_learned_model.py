@@ -4,6 +4,7 @@ import os
 import matplotlib
 import numpy as np
 import torch
+import plotly.graph_objects as go
 
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
 from ArticulationModelLearning.magic.lstm.models import DeepArtModel
@@ -277,16 +278,25 @@ if __name__ == "__main__":
     plt.savefig(output_dir + '/orientation_test_error.png')
     plt.close(fig)
 
-    fig = plt.figure(11)
+    # fig = plt.figure(11)
+    # data = all_ori_err_mean.numpy()
+    # binwidth = 0.05
+    # plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
+    # plt.xlabel("Orientation error (rad)")
+    # plt.ylabel("No. of test objects")
+    # plt.title("Histogram of mean test errors in screw axis orientation")
+    # plt.tight_layout()
+    # plt.savefig(output_dir + '/orientation_test_error_hist.png')
+    # plt.close(fig)
+
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
-    plt.xlabel("Orientation error (rad)")
-    plt.ylabel("No. of test objects")
-    plt.title("Histogram of mean test errors in screw axis orientation")
-    plt.tight_layout()
-    plt.savefig(output_dir + '/orientation_test_error_hist.png')
-    plt.close(fig)
+    counts, bins = np.histogram(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
+    bins = 0.5 * (bins[:-1] + bins[1:])
+    fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, labels={'x':"Orientation error (rad)",
+                                                                  'y':"No. of test objects"})])
+    fig1.write_image(output_dir + '/orientation_test_error_hist.png')
+
 
     fig = plt.figure(2)
     plt.errorbar(x_axis, all_dist_err_mean.numpy(), all_dist_err_std.numpy(), marker='o', ms=4, mfc='blue', capsize=3.,
