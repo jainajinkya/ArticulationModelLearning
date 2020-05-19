@@ -209,7 +209,7 @@ if __name__ == "__main__":
                 all_ori_err_std = torch.cat((all_ori_err_std, ori_err_std.cpu()))
 
                 # Distance b/w plucker lines in cm
-                dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred) * 100., dim=-1)
+                dist_err_std, dist_err_mean = torch.std_mean(distance_bw_plucker_lines(labels, y_pred), dim=-1)
                 all_dist_err_mean = torch.cat((all_dist_err_mean, dist_err_mean.cpu()))
                 all_dist_err_std = torch.cat((all_dist_err_std, dist_err_std.cpu()))
 
@@ -218,7 +218,7 @@ if __name__ == "__main__":
                 all_q_err_mean = torch.cat((all_q_err_mean, q_err_mean.cpu()))
                 all_q_err_std = torch.cat((all_q_err_std, q_err_std.cpu()))
 
-                d_err_std, d_err_mean = torch.std_mean(torch.abs(labels[:, :, 7] - y_pred[:, :, 7]) * 100., dim=-1)
+                d_err_std, d_err_mean = torch.std_mean(torch.abs(labels[:, :, 7] - y_pred[:, :, 7]), dim=-1)
                 all_d_err_mean = torch.cat((all_d_err_std, d_err_mean.cpu()))
                 all_d_err_std = torch.cat((all_d_err_std, d_err_std.cpu()))
 
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         # fig1.write_image(output_dir + '/theta_err_hist.png')
 
         fig = plt.figure(4)
-        plt.errorbar(x_axis, all_d_err_mean.numpy(), all_d_err_std.numpy(), capsize=3., capthick=1., ls='none')
+        plt.errorbar(x_axis, all_d_err_mean.numpy() * 100., all_d_err_std.numpy() * 100., capsize=3., capthick=1., ls='none')
         plt.xlabel("Test object number")
         plt.ylabel("Error (cm)")
         plt.title("Test error in d")
@@ -272,7 +272,7 @@ if __name__ == "__main__":
         plt.close(fig)
 
         fig = plt.figure(41)
-        data = all_d_err_mean.numpy()
+        data = all_d_err_mean.numpy() * 100.
         binwidth = 0.5
         plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
         plt.xlabel("Error (cm)")
@@ -282,7 +282,7 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/d_err_hist.png')
         plt.close(fig)
 
-        # data = all_d_err_mean.numpy()
+        # data = all_d_err_mean.numpy() * 100.
         # binwidth = 0.005
         # counts, bins = np.histogram(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
         # bins = 0.5 * (bins[:-1] + bins[1:])
@@ -337,8 +337,8 @@ if __name__ == "__main__":
     # fig1.write_image(output_dir + '/orientation_test_error_hist.png')
 
     fig = plt.figure(2)
-    plt.errorbar(x_axis, all_dist_err_mean.numpy(), all_dist_err_std.numpy(), marker='o', ms=4, mfc='blue', capsize=3.,
-                 capthick=1., ls='none')
+    plt.errorbar(x_axis, all_dist_err_mean.numpy() * 100., all_dist_err_std.numpy() * 100.,
+                 marker='o', ms=4, mfc='blue', capsize=3., capthick=1., ls='none')
     plt.xlabel("Test object number")
     plt.ylabel("Spatial distance error (cm)")
     plt.title("Test error in spatial distance")
@@ -347,7 +347,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     fig = plt.figure(21)
-    data = all_dist_err_mean.numpy()
+    data = all_dist_err_mean.numpy() * 100.
     binwidth = 1.
     plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
     plt.xlabel("Spatial distance error (cm)")
