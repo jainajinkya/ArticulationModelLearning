@@ -368,3 +368,5 @@ if __name__ == "__main__":
     #     yaxis_title_text='% test objects',  # yaxis label
     # )
     # fig1.write_image(output_dir + '/distance_test_error_hist.png')
+
+    print("Saved plots in directory {}".format(output_dir))
