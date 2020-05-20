@@ -167,7 +167,7 @@ if __name__ == "__main__":
             x_label = "Error (rad)"
             title = "Histogram of mean test errors in theta"
 
-        plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
+        plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), normed=True)
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel(x_label)
         plt.ylabel("Percentage of test objects")
@@ -257,7 +257,7 @@ if __name__ == "__main__":
         fig = plt.figure(31)
         data = all_q_err_mean.numpy()
         binwidth = 0.005
-        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
+        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), normed=True)
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (rad)")
         plt.ylabel("Percentage of test objects")
@@ -279,7 +279,7 @@ if __name__ == "__main__":
         fig = plt.figure(41)
         data = copy.copy(all_d_err_mean.numpy()) * 100.
         binwidth = 0.5
-        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
+        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), normed=True)
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (cm)")
         plt.ylabel("Percentage of test objects")
@@ -310,7 +310,7 @@ if __name__ == "__main__":
     fig = plt.figure(11)
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
+    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), normed=True)
     plt.gca().yaxis.set_major_formatter(formatter)
     plt.xlabel("Orientation error (rad)")
     plt.ylabel("Percentage of test objects")
@@ -332,7 +332,7 @@ if __name__ == "__main__":
     fig = plt.figure(21)
     data = copy.copy(all_dist_err_mean.numpy()) * 100.
     binwidth = 1.
-    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
+    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), normed=True)
     plt.gca().yaxis.set_major_formatter(formatter)
     plt.xlabel("Spatial distance error (cm)")
     plt.ylabel("Percentage of test objects")
