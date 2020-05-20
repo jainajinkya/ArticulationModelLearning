@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 
 import matplotlib
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         plt.close(fig)
 
         fig = plt.figure(31)
-        data = all_q_err_mean.numpy()
+        data = copy.copy(all_q_err_mean.numpy())
         if args.obj in {'drawer'}:
             data *= 100.
             binwidth = 0.5
@@ -276,7 +277,7 @@ if __name__ == "__main__":
         plt.close(fig)
 
         fig = plt.figure(41)
-        data = all_d_err_mean.numpy() * 100.
+        data = copy.copy(all_d_err_mean.numpy()) * 100.
         binwidth = 0.5
         plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
         plt.gca().yaxis.set_major_formatter(formatter)
@@ -329,7 +330,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     fig = plt.figure(21)
-    data = all_dist_err_mean.numpy() * 100.
+    data = copy.copy(all_dist_err_mean.numpy()) * 100.
     binwidth = 1.
     plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
     plt.gca().yaxis.set_major_formatter(formatter)
