@@ -139,14 +139,22 @@ if __name__ == "__main__":
         plt.close(fig)
 
         fig = plt.figure(31)
-        data = all_q_err_mean.numpy() * 100.
         binwidth = 0.005
-        plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
-        plt.xlabel("Error (cm)")
+        data = all_q_err_mean.numpy()
+        if args.obj in {'drawer'}:
+            data *= 100.
+            title = "Histogram of mean test errors in d"
+            x_label = "Error (cm)"
+        else:
+            x_label = "Error (rad)"
+            title = "Histogram of mean test errors in theta"
+
+        plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth))
+        plt.xlabel(x_label)
         plt.ylabel("No. of test objects")
-        plt.title("Histogram of mean test errors in d")
+        plt.title(title)
         plt.tight_layout()
-        plt.savefig(output_dir + '/d_err_hist.png')
+        plt.savefig(output_dir + '/config_err_hist.png')
         plt.close(fig)
 
         # data = all_q_err_mean.numpy()
