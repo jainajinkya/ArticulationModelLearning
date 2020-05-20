@@ -167,7 +167,7 @@ if __name__ == "__main__":
             x_label = "Error (rad)"
             title = "Histogram of mean test errors in theta"
 
-        plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth))
+        plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel(x_label)
         plt.ylabel("Percentage of test objects")
