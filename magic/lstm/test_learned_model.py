@@ -21,7 +21,7 @@ from matplotlib import pyplot as plt
 def to_percent(y, position):
     # Ignore the passed in position. This has the effect of scaling the default
     # tick locations.
-    y = np.round(y, 2)
+    y = np.round(y, 3)
     s = str(100 * y)
 
     # The percent symbol needs escaping in latex
