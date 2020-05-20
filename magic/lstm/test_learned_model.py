@@ -312,9 +312,10 @@ if __name__ == "__main__":
     fig = plt.figure(11)
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
+    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), weights=np.ones(len(data)) / len(data),
+             density=True)
     # plt.gca().yaxis.set_major_formatter(formatter)
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
+    plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
     plt.xlabel("Orientation error (rad)")
     plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in screw axis orientation")
