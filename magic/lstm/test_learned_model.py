@@ -18,7 +18,7 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 
-def to_percent(y, position):
+def to_percent(position, y):
     # Ignore the passed in position. This has the effect of scaling the default
     # tick locations.
     y = np.round(y, 3)
@@ -153,12 +153,12 @@ if __name__ == "__main__":
         plt.ylabel("Error in Config")
         plt.title("Test error in Configurations")
         plt.tight_layout()
-        plt.savefig(output_dir + '/theta_err.png')
+        plt.savefig(output_dir + '/config_err.png')
         plt.close(fig)
 
         fig = plt.figure(31)
         data = copy.copy(all_q_err_mean.numpy())
-        if args.obj in {'drawer'}:
+        if args.obj == 'drawer':
             data *= 100.
             binwidth = 0.5
             title = "Histogram of mean test errors in d"
