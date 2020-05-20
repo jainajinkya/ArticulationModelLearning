@@ -12,7 +12,7 @@ from GeneralizingKinematics.magic.mixture import mdn
 from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
-from matplotlib.ticker import PercentFormatter, FuncFormatter
+from matplotlib.ticker import FuncFormatter
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -22,7 +22,6 @@ def to_percent(y, position):
     # tick locations.
     global n
     s = str(round(100 * y / n, 3))
-    print (y)
 
     # The percent symbol needs escaping in latex
     if matplotlib.rcParams['text.usetex'] is True:
@@ -172,7 +171,6 @@ if __name__ == "__main__":
         global n
         n = 1 / binwidth
         plt.gca().yaxis.set_major_formatter(formatter)
-        # plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
         plt.xlabel(x_label)
         plt.ylabel("Percentage of test objects")
         plt.title(title)
@@ -262,6 +260,8 @@ if __name__ == "__main__":
         data = all_q_err_mean.numpy()
         binwidth = 0.005
         plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
+        global n
+        n = 1 / binwidth
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (rad)")
         plt.ylabel("Percentage of test objects")
@@ -284,6 +284,8 @@ if __name__ == "__main__":
         data = copy.copy(all_d_err_mean.numpy()) * 100.
         binwidth = 0.5
         plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
+        global n
+        n = 1 / binwidth
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (cm)")
         plt.ylabel("Percentage of test objects")
@@ -316,8 +318,9 @@ if __name__ == "__main__":
     binwidth = 0.05
     plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), weights=np.ones(len(data)) / len(data),
              density=True)
-    # plt.gca().yaxis.set_major_formatter(formatter)
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+    global n
+    n = 1 / binwidth
+    plt.gca().yaxis.set_major_formatter(formatter)
     plt.xlabel("Orientation error (rad)")
     plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in screw axis orientation")
@@ -339,8 +342,9 @@ if __name__ == "__main__":
     data = copy.copy(all_dist_err_mean.numpy()) * 100.
     binwidth = 1.
     plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
-    # plt.gca().yaxis.set_major_formatter(formatter)
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
+    global n
+    n = 1 / binwidth
+    plt.gca().yaxis.set_major_formatter(formatter)
     plt.xlabel("Spatial distance error (cm)")
     plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in spatial distance")
