@@ -12,10 +12,23 @@ from GeneralizingKinematics.magic.mixture import mdn
 from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
-from matplotlib.ticker import PercentFormatter
+from matplotlib.ticker import PercentFormatter, FuncFormatter
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+
+def to_percent(y, position):
+    # Ignore the passed in position. This has the effect of scaling the default
+    # tick locations.
+    global n
+    s = str(round(100 * y / n, 3))
+    print (y)
+
+    # The percent symbol needs escaping in latex
+    if matplotlib.rcParams['text.usetex'] is True:
+        return s + r'$\%$'
+    else:
+        return s + '%'
 
 
 if __name__ == "__main__":
@@ -52,6 +65,9 @@ if __name__ == "__main__":
         device = torch.device(args.device)
     else:
         device = torch.device('cpu')
+
+    # Plotting Histograms as percentages
+    formatter = FuncFormatter(to_percent)
 
     if args.model_type == 'ben':
         print("Testing Model: Ben et al.")
@@ -153,8 +169,10 @@ if __name__ == "__main__":
             title = "Histogram of mean test errors in theta"
 
         plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
-        plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
-
+        global n
+        n = 1 / binwidth
+        plt.gca().yaxis.set_major_formatter(formatter)
+        # plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
         plt.xlabel(x_label)
         plt.ylabel("Percentage of test objects")
         plt.title(title)
@@ -244,8 +262,7 @@ if __name__ == "__main__":
         data = all_q_err_mean.numpy()
         binwidth = 0.005
         plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
-        plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
-
+        plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (rad)")
         plt.ylabel("Percentage of test objects")
         plt.title("Histogram of mean test errors in theta")
@@ -267,8 +284,7 @@ if __name__ == "__main__":
         data = copy.copy(all_d_err_mean.numpy()) * 100.
         binwidth = 0.5
         plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
-        plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
-
+        plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (cm)")
         plt.ylabel("Percentage of test objects")
         plt.title("Histogram of mean test errors in d")
@@ -323,6 +339,7 @@ if __name__ == "__main__":
     data = copy.copy(all_dist_err_mean.numpy()) * 100.
     binwidth = 1.
     plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
+    # plt.gca().yaxis.set_major_formatter(formatter)
     plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
     plt.xlabel("Spatial distance error (cm)")
     plt.ylabel("Percentage of test objects")
