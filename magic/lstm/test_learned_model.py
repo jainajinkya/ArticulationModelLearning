@@ -13,16 +13,16 @@ from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
 from matplotlib.ticker import FuncFormatter
+from matplotlib.ticker import PercentFormatter
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 
-def to_percent(position, y):
+def to_percent(y, position):
     # Ignore the passed in position. This has the effect of scaling the default
     # tick locations.
-    y = np.round(y, 3)
-    s = str(100 * y)
+    s = str(np.round(100 * y), 2)
 
     # The percent symbol needs escaping in latex
     if matplotlib.rcParams['text.usetex'] is True:
@@ -169,7 +169,8 @@ if __name__ == "__main__":
             title = "Histogram of mean test errors in theta"
 
         plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
-        plt.gca().yaxis.set_major_formatter(formatter)
+        # plt.gca().yaxis.set_major_formatter(formatter)
+        plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
         plt.xlabel(x_label)
         plt.ylabel("Percentage of test objects")
         plt.title(title)
@@ -312,7 +313,8 @@ if __name__ == "__main__":
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
     plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
-    plt.gca().yaxis.set_major_formatter(formatter)
+    # plt.gca().yaxis.set_major_formatter(formatter)
+    plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
     plt.xlabel("Orientation error (rad)")
     plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in screw axis orientation")
@@ -334,7 +336,8 @@ if __name__ == "__main__":
     data = copy.copy(all_dist_err_mean.numpy()) * 100.
     binwidth = 1.
     plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
-    plt.gca().yaxis.set_major_formatter(formatter)
+    # plt.gca().yaxis.set_major_formatter(formatter)
+    plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1))
     plt.xlabel("Spatial distance error (cm)")
     plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in spatial distance")
