@@ -143,6 +143,7 @@ if __name__ == "__main__":
         data = all_q_err_mean.numpy()
         if args.obj in {'drawer'}:
             data *= 100.
+            binwidth *= 100.
             title = "Histogram of mean test errors in d"
             x_label = "Error (cm)"
         else:
@@ -250,7 +251,7 @@ if __name__ == "__main__":
         fig = plt.figure(31)
         data = all_q_err_mean.numpy()
         binwidth = 0.005
-        plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth))
         plt.xlabel("Error (rad)")
         plt.ylabel("No. of test objects")
         plt.title("Histogram of mean test errors in theta")
@@ -282,7 +283,7 @@ if __name__ == "__main__":
         fig = plt.figure(41)
         data = all_d_err_mean.numpy() * 100.
         binwidth = 0.5
-        plt.hist(data, bins=np.arange(min(data), max(data) + binwidth, binwidth))
+        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth))
         plt.xlabel("Error (cm)")
         plt.ylabel("No. of test objects")
         plt.title("Histogram of mean test errors in d")
@@ -324,7 +325,7 @@ if __name__ == "__main__":
     fig = plt.figure(11)
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
+    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth))
     plt.xlabel("Orientation error (rad)")
     plt.ylabel("No. of test objects")
     plt.title("Histogram of mean test errors in screw axis orientation")
@@ -357,7 +358,7 @@ if __name__ == "__main__":
     fig = plt.figure(21)
     data = all_dist_err_mean.numpy() * 100.
     binwidth = 1.
-    plt.hist(data, bins=np.arange(data.min(), data.max() + binwidth, binwidth))
+    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth))
     plt.xlabel("Spatial distance error (cm)")
     plt.ylabel("No. of test objects")
     plt.title("Histogram of mean test errors in spatial distance")
