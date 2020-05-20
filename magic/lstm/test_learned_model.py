@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 def to_percent(y, position):
     # Ignore the passed in position. This has the effect of scaling the default
     # tick locations.
-    s = str(100 * y)
+    s = str(round(100 * y, 2))
 
     # The percent symbol needs escaping in latex
     if matplotlib.rcParams['text.usetex'] is True:
@@ -155,21 +155,21 @@ if __name__ == "__main__":
         plt.close(fig)
 
         fig = plt.figure(31)
-        binwidth = 0.005
         data = all_q_err_mean.numpy()
         if args.obj in {'drawer'}:
             data *= 100.
-            binwidth *= 100.
+            binwidth = 0.5
             title = "Histogram of mean test errors in d"
             x_label = "Error (cm)"
         else:
+            binwidth = 0.05
             x_label = "Error (rad)"
             title = "Histogram of mean test errors in theta"
 
         plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth))
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel(x_label)
-        plt.ylabel("No. of test objects")
+        plt.ylabel("Percentage of test objects")
         plt.title(title)
         plt.tight_layout()
         plt.savefig(output_dir + '/config_err_hist.png')
@@ -256,10 +256,10 @@ if __name__ == "__main__":
         fig = plt.figure(31)
         data = all_q_err_mean.numpy()
         binwidth = 0.005
-        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), normed=True)
+        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (rad)")
-        plt.ylabel("No. of test objects")
+        plt.ylabel("Percentage of test objects")
         plt.title("Histogram of mean test errors in theta")
         plt.tight_layout()
         plt.savefig(output_dir + '/theta_err_hist.png')
@@ -278,10 +278,10 @@ if __name__ == "__main__":
         fig = plt.figure(41)
         data = all_d_err_mean.numpy() * 100.
         binwidth = 0.5
-        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), normed=True)
+        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
         plt.gca().yaxis.set_major_formatter(formatter)
         plt.xlabel("Error (cm)")
-        plt.ylabel("No. of test objects")
+        plt.ylabel("Percentage of test objects")
         plt.title("Histogram of mean test errors in d")
         plt.tight_layout()
         plt.savefig(output_dir + '/d_err_hist.png')
@@ -309,10 +309,10 @@ if __name__ == "__main__":
     fig = plt.figure(11)
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), normed=True)
+    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
     plt.gca().yaxis.set_major_formatter(formatter)
     plt.xlabel("Orientation error (rad)")
-    plt.ylabel("No. of test objects")
+    plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in screw axis orientation")
     plt.tight_layout()
     plt.savefig(output_dir + '/orientation_test_error_hist.png')
@@ -331,10 +331,10 @@ if __name__ == "__main__":
     fig = plt.figure(21)
     data = all_dist_err_mean.numpy() * 100.
     binwidth = 1.
-    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), normed=True)
+    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
     plt.gca().yaxis.set_major_formatter(formatter)
     plt.xlabel("Spatial distance error (cm)")
-    plt.ylabel("No. of test objects")
+    plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in spatial distance")
     plt.tight_layout()
     plt.savefig(output_dir + '/distance_test_error_hist.png')
