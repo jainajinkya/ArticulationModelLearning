@@ -53,9 +53,6 @@ if __name__ == "__main__":
     else:
         device = torch.device('cpu')
 
-    # Plotting Histograms as percentages
-    formatter = FuncFormatter(to_percent)
-
     if args.model_type == 'ben':
         print("Testing Model: Ben et al.")
         bounds = np.load(os.path.join(args.test_dir, 'bounds.npy'))
