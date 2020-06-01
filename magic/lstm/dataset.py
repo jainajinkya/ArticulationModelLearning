@@ -9,8 +9,7 @@ from torch.utils.data import Dataset
 import transforms3d as tf3d
 
 from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, quat_as_xyzw, all_combinations, \
-    transform_plucker_line
-from SyntheticArticulatedData.generation.utils import change_frames
+    transform_plucker_line, change_frames
 
 
 class ArticulationDataset(Dataset):

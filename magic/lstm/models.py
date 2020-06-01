@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from magic.lstm.utils import distance_bw_plucker_lines, \
+from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, \
     orientation_difference_bw_plucker_lines
 from torchvision import models
 
