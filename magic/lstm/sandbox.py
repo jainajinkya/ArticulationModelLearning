@@ -5,7 +5,7 @@ import h5py
 import torch
 import numpy as np
 
-from magic.lstm.utils import transform_to_screw
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw
 from SyntheticArticulatedData.generation.utils import change_frames
 
 

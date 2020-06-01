@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
-from magic.lstm.utils import dual_quaternion_to_screw_batch_mode
+from ArticulationModelLearning.magic.lstm.utils import dual_quaternion_to_screw_batch_mode
 
 
 class ModelTrainer(object):

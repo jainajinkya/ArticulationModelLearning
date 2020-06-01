@@ -1,10 +1,10 @@
 import argparse
 
 import torch
-from magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
+from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
     ArticulationDatasetV1
-from magic.lstm.model_trainer import ModelTrainer
-from magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
+from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
+from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
     DeepArtModel
 

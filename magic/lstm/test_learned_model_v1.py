@@ -5,9 +5,9 @@ import matplotlib
 import numpy as np
 import plotly.graph_objects as go
 import torch
-from magic.lstm.dataset import ArticulationDataset
-from magic.lstm.models import DeepArtModel
-from magic.lstm.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors
+from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
+from ArticulationModelLearning.magic.lstm.models import DeepArtModel
+from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors
 from GeneralizingKinematics.magic.mixture import mdn
 from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
