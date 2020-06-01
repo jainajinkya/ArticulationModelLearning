@@ -49,7 +49,6 @@ class ArticulationDataset(Dataset):
         moving_body_poses = obj_data['moving_frame_in_world']
 
         label = np.empty((len(moving_body_poses) - 1, 8))
-        import pdb; pdb.set_trace()
 
         for i in range(len(moving_body_poses) - 1):
             pt1 = moving_body_poses[i, :]
@@ -62,7 +61,7 @@ class ArticulationDataset(Dataset):
             # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
 
             # Convert screw axis to global coordinates
-            line_global = transform_plucker_line(np.concatenate(l_hat, m), trans=pt1[:3], quat=pt1[3:])
+            line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
             label[i, :] = np.concatenate((line_global, [theta], [d]))
 
         label = torch.from_numpy(label).float()

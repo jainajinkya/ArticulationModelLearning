@@ -204,13 +204,13 @@ def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
 
 
 def transform_plucker_line(line, trans, quat):
-    trasform = np.zeros(6, 6)
+    transform = np.zeros((6, 6))
     rot_mat = tf3d.quaternions.quat2mat(quat)
     t_mat = to_skew_symmetric_matrix(trans)
-    trasform[0:3, 3:6] = rot_mat
-    trasform[3:6, 0:3] = rot_mat
-    trasform[3:6, 3:6] = np.matmul(t_mat, rot_mat)
-    return np.matmul(trasform, line)
+    transform[0:3, 0:3] = rot_mat
+    transform[3:6, 0:3] = np.matmul(t_mat, rot_mat)
+    transform[3:6, 3:6] = rot_mat
+    return np.matmul(transform, line)
 
 
 def to_skew_symmetric_matrix(v):
