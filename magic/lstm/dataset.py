@@ -16,13 +16,15 @@ class ArticulationDataset(Dataset):
     def __init__(self,
                  ntrain,
                  root_dir,
-                 n_dof):
+                 n_dof,
+                 transform=None):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
         self.labels_data = None
         self.length = ntrain
         self.n_dof = n_dof
+        self.transform = transform
 
     def __len__(self):
         return self.length
@@ -37,12 +39,17 @@ class ArticulationDataset(Dataset):
         # Load depth image
         depth_imgs = torch.tensor(obj_data['depth_imgs'])
         depth_imgs.unsqueeze_(1).float()
+
+        if self.transform is not None:
+            depth_imgs = self.transform(depth_imgs)
+
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
         # # Load labels
         moving_body_poses = obj_data['moving_frame_in_world']
 
         label = np.empty((len(moving_body_poses) - 1, 8))
+        import pdb; pdb.set_trace()
 
         for i in range(len(moving_body_poses) - 1):
             pt1 = moving_body_poses[i, :]
