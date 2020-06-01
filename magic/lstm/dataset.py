@@ -55,7 +55,7 @@ class ArticulationDataset(Dataset):
             # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
 
             # Convert screw axis to global coordinates
-            line_global = transform_plucker_line(np.concatenate((l_hat, m), trans=pt1[:3], quat=pt1[3:]))
+            line_global = transform_plucker_line(np.concatenate(l_hat, m), trans=pt1[:3], quat=pt1[3:])
             label[i, :] = np.concatenate((line_global, [theta], [d]))
 
         label = torch.from_numpy(label).float()
