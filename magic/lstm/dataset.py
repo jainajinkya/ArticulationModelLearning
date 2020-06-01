@@ -38,10 +38,11 @@ class ArticulationDataset(Dataset):
 
         # Load depth image
         depth_imgs = torch.tensor(obj_data['depth_imgs'])
-        depth_imgs.unsqueeze_(1).float()
 
         if self.transform is not None:
             depth_imgs = self.transform(depth_imgs)
+
+        depth_imgs.unsqueeze_(1).float()
 
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
