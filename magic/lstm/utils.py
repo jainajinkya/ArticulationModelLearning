@@ -204,6 +204,48 @@ def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
     return torch.acos(torch.clamp(2 * quaternion_inner_product(q1, q2) ** 2 - 1, -1 + eps, 1 - eps))
 
 
+def transform_plucker_line(line, trans, quat):
+    trasform = np.zeros(6, 6)
+    rot_mat = tf3d.quaternions.quat2mat(quat)
+    t_mat = to_skew_symmetric_matrix(trans)
+    trasform[0:3, 3:6] = rot_mat
+    trasform[3:6, 0:3] = rot_mat
+    trasform[3:6, 3:6] = np.matmul(t_mat, rot_mat)
+    return np.matmul(trasform, line)
+
+
+def to_skew_symmetric_matrix(v):
+    return np.array([[0., -v[2], v[1]],
+                     [v[2], 0., -v[0]],
+                     [-v[1], v[0], 0.]])
+
+
+def transform_plucker_line_batch(line, trans, quat):
+    # line : <l_hat, m>
+    transform = torch.zeros((6, 6))
+    rot_mat = torch.from_numpy(tf3d.quaternions.quat2mat(quat))
+    t_mat = to_skew_symmetric_matrix_batch(trans)
+    transform[0:3, 3:6] = rot_mat
+    transform[3:6, 0:3] = rot_mat
+    transform[3:6, 3:6] = torch.matmul(t_mat, rot_mat)
+    return torch.matmul(transform, line.transpose(-1, -2)).transpose(-1, -2)
+
+
+def to_skew_symmetric_matrix_batch(vec):
+    assert vec.shape[-1] == 3
+    original_shape = vec.size()
+    vec = vec.view(-1, 3)
+    skew_mat = torch.zeros((vec.size(0), 3, 3))
+    skew_mat[:, 0, 1] = -vec[:, 2]
+    skew_mat[:, 0, 2] = vec[:, 1]
+    skew_mat[:, 1, 0] = vec[:, 2]
+    skew_mat[:, 1, 2] = -vec[:, 0]
+    skew_mat[:, 2, 0] = -vec[:, 1]
+    skew_mat[:, 2, 1] = vec[:, 0]
+    return skew_mat.view(list(original_shape[:-1]) + [3, 3])
+
+
+
 # Plotting Utils
 def set_axes_radius(ax, origin, radius):
     ax.set_xlim3d([origin[0] - radius, origin[0] + radius])
