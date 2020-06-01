@@ -170,6 +170,8 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     # Checking for Parallel Lines
     if torch.any(norm_cross_prod <= eps):
         zero_idxs = (norm_cross_prod <= eps).nonzero(as_tuple=True)
+        print("zero_idx:", zero_idxs)
+        print("target[zero_idxs][:, :3]: ", target[zero_idxs][:, :3])
         scales = torch.norm(prediction[zero_idxs][:, :3], dim=-1) / torch.norm(target[zero_idxs][:, :3], dim=-1) + eps
         dist[zero_idxs] = torch.norm(torch.cross(target[zero_idxs][:, :3], (
                 target[zero_idxs][:, 3:6] - prediction[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / (
@@ -204,13 +206,13 @@ def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
 
 
 def transform_plucker_line(line, trans, quat):
-    trasform = np.zeros(6, 6)
+    transform = np.zeros((6, 6))
     rot_mat = tf3d.quaternions.quat2mat(quat)
     t_mat = to_skew_symmetric_matrix(trans)
-    trasform[0:3, 3:6] = rot_mat
-    trasform[3:6, 0:3] = rot_mat
-    trasform[3:6, 3:6] = np.matmul(t_mat, rot_mat)
-    return np.matmul(trasform, line)
+    transform[0:3, 3:6] = rot_mat
+    transform[3:6, 0:3] = rot_mat
+    transform[3:6, 3:6] = np.matmul(t_mat, rot_mat)
+    return np.matmul(transform, line)
 
 
 def to_skew_symmetric_matrix(v):
