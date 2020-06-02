@@ -159,6 +159,7 @@ def append_all_labels_to_dataset(filename):
     print("Added all transforms to the dataset.")
 
 
+@profile
 def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     """ Input shapes Tensors: Batch X #Images X 8
     # Based on formula from Plücker Coordinates for Lines in the Space by Prof. Yan-bin Jia
@@ -184,6 +185,7 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     return dist
 
 
+@profile
 def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
     """ Input shapes Tensors: Batch X #Images X 8
     range of arccos ins [0, pi)"""
@@ -199,10 +201,12 @@ def quaternion_inner_product(q, r):
     return torch.bmm(q.view(-1, 1, 4), r.view(-1, 4, 1)).view(original_shape[:-1])
 
 
+@profile
 def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
     return torch.acos(torch.clamp(2 * quaternion_inner_product(q1, q2) ** 2 - 1, -1 + eps, 1 - eps))
 
 
+@profile
 def transform_plucker_line(line, trans, quat):
     transform = np.zeros((6, 6))
     rot_mat = tf3d.quaternions.quat2mat(quat)
@@ -244,6 +248,7 @@ def to_skew_symmetric_matrix_batch(vec):
     return skew_mat.view(list(original_shape[:-1]) + [3, 3])
 
 
+@profile
 def change_frames(frame_B_wrt_A, pose_wrt_A):
     A_T_pose = tf3d.affines.compose(T=pose_wrt_A[:3],
                                     R=tf3d.quaternions.quat2mat(pose_wrt_A[3:]),  # quat in  wxyz
