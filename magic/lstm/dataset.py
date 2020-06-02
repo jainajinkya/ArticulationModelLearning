@@ -1,15 +1,11 @@
 import os
 from itertools import combinations
 
-import dq3d
-import numpy as np
 import h5py
+import numpy as np
 import torch
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line, change_frames
 from torch.utils.data import Dataset
-import transforms3d as tf3d
-
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, quat_as_xyzw, all_combinations, \
-    transform_plucker_line, change_frames
 
 
 class ArticulationDataset(Dataset):
@@ -43,7 +39,7 @@ class ArticulationDataset(Dataset):
         moving_body_poses = obj_data['moving_frame_in_world']
 
         label = np.empty((len(moving_body_poses) - 1, 8))
-        
+
         for i in range(len(moving_body_poses) - 1):
             pt1 = moving_body_poses[i, :]
             pt2 = moving_body_poses[i + 1, :]
