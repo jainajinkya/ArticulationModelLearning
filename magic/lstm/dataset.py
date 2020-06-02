@@ -28,7 +28,6 @@ class ArticulationDataset(Dataset):
         return self.length
 
     def __getitem__(self, idx):
-        @profile
         if self.labels_data is None:
             self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
 
