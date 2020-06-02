@@ -12,13 +12,15 @@ class ArticulationDataset(Dataset):
     def __init__(self,
                  ntrain,
                  root_dir,
-                 n_dof):
+                 n_dof,
+                 norm_factor=2.5):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
         self.labels_data = None
         self.length = ntrain
         self.n_dof = n_dof
+        self.normalization_factor = norm_factor
 
     def __len__(self):
         return self.length
@@ -53,6 +55,9 @@ class ArticulationDataset(Dataset):
             # Convert screw axis to global coordinates
             line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
             label[i, :] = np.concatenate((line_global, [theta], [d]))
+
+        # Normalize labels
+        label[:, 3:6] /= self.normalization_factor
 
         label = torch.from_numpy(label).float()
         sample = {'depth': depth_imgs,

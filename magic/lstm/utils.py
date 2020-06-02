@@ -88,21 +88,21 @@ def detect_model_class(mv_frames):
     return model_class_name
 
 
-def interpret_label(label):
-    label = label.view(-1, 8)
-    l_hat_array = label[:, :3]
-    m_array = label[:, 3:6]
-    q_array = label[:, 6]
-    d_array = label[:, 7]
-
-    return {
-        'screw_axis': (torch.mean(l_hat_array, dim=0).cpu(),
-                       torch.mean(m_array, dim=0).cpu()),
-        'l_hat_array': l_hat_array.cpu(),
-        'm_array': m_array.cpu(),
-        'theta_array': q_array.cpu(),
-        'd_array': d_array.cpu()
-    }
+# def interpret_label(label):
+#     label = label.view(-1, 8)
+#     l_hat_array = label[:, :3]
+#     m_array = label[:, 3:6]
+#     q_array = label[:, 6]
+#     d_array = label[:, 7]
+#
+#     return {
+#         'screw_axis': (torch.mean(l_hat_array, dim=0).cpu(),
+#                        torch.mean(m_array, dim=0).cpu()),
+#         'l_hat_array': l_hat_array.cpu(),
+#         'm_array': m_array.cpu(),
+#         'theta_array': q_array.cpu(),
+#         'd_array': d_array.cpu()
+#     }
 
     # # A single label consists of reference frame dual quaternion and moving frame quats
     # ref_dq = label[0, :]
@@ -260,6 +260,9 @@ def change_frames(frame_B_wrt_A, pose_wrt_A):
     quat = tf3d.quaternions.mat2quat(rot)
     return np.concatenate((trans, quat))  # return quat in wxyz
 
+
+def interpret_labels(label, scale):
+    return label[:, :, 3:6] * scale
 
 # Plotting Utils
 def set_axes_radius(ax, origin, radius):
