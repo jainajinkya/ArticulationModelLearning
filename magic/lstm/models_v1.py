@@ -96,7 +96,7 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
 
     # Configuration Loss
     # conf_err = theta_config_error(target, pred) + d_config_error(target, pred)
-    conf_err = ((target[:, :, 6:] - pred[:, :, 6:]) ** 2).sum(dim=-1)
+    conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
 
     err = dist_err + conf_err
     loss = torch.mean(err)
