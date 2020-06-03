@@ -205,14 +205,14 @@ def theta_config_error(target, prediction):
 def angle_axis_to_rotation_matrix(angle_axis, theta, eps=1e-10):
     # Stolen from PyTorch geometry library. Modified for our code
     angle_axis_shape = angle_axis.shape
-    angle_axis = angle_axis.view(-1, 3)
-    theta = theta.view(-1, 1)
+    angle_axis_ = angle_axis.view(-1, 3)
+    theta_ = theta.view(-1, 1)
 
     k_one = 1.0
-    normed_axes = angle_axis / angle_axis.norm(dim=-1, keepdim=True)
+    normed_axes = angle_axis_ / angle_axis_.norm(dim=-1, keepdim=True)
     wx, wy, wz = torch.chunk(normed_axes, 3, dim=1)
-    cos_theta = torch.cos(theta)
-    sin_theta = torch.sin(theta)
+    cos_theta = torch.cos(theta_)
+    sin_theta = torch.sin(theta_)
 
     r00 = cos_theta + wx * wx * (k_one - cos_theta)
     r10 = wz * sin_theta + wx * wy * (k_one - cos_theta)
