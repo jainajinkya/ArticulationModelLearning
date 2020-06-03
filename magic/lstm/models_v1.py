@@ -96,11 +96,11 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
     dist_error = distance_bw_plucker_lines(target, pred)
 
     # Configuration Loss
-    conf_error_theta = theta_config_error(target, pred)
-    conf_error_d = d_config_error(target, pred)
-    # conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
+    # conf_error_theta = theta_config_error(target, pred)
+    # conf_error_d = d_config_error(target, pred)
+    conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
 
-    err = ori_error + dist_error + conf_error_theta + conf_error_d
+    err = ori_error + dist_error + conf_err
     loss = torch.mean(err)
 
     # print("Orientation error: ", ori_error.mean())
