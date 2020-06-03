@@ -92,8 +92,8 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
     pred = expand_labels(pred)  # Adding 3rd dimension to m
 
     # Spatial Distance loss
-    ori_error = orientation_difference_bw_plucker_lines(target, pred) ** 2
-    dist_error = distance_bw_plucker_lines(target, pred) ** 2
+    ori_error = orientation_difference_bw_plucker_lines(target, pred)
+    dist_error = distance_bw_plucker_lines(target, pred)
 
     # Configuration Loss
     conf_error_theta = theta_config_error(target, pred)
