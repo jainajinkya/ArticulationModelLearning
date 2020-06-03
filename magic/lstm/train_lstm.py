@@ -104,11 +104,11 @@ if __name__ == "__main__":
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                              shuffle=True, num_workers=args.nwork,
-                                             pin_memory=False)
+                                             pin_memory=True)
 
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch,
                                               shuffle=True, num_workers=args.nwork,
-                                              pin_memory=False)
+                                              pin_memory=True)
 
     # Load Saved wts
     if args.load_wts:

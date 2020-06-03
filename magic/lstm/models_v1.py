@@ -92,14 +92,21 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
     pred = expand_labels(pred)  # Adding 3rd dimension to m
 
     # Spatial Distance loss
-    dist_err = orientation_difference_bw_plucker_lines(target, pred) ** 2 + distance_bw_plucker_lines(target, pred) ** 2
+    ori_error = orientation_difference_bw_plucker_lines(target, pred) ** 2
+    dist_error = distance_bw_plucker_lines(target, pred) ** 2
 
     # Configuration Loss
-    # conf_err = theta_config_error(target, pred) + d_config_error(target, pred)
-    conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
+    conf_error_theta = theta_config_error(target, pred)
+    conf_error_d = d_config_error(target, pred)
+    # conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
 
-    err = dist_err + conf_err
+    err = ori_error + dist_error + conf_error_theta + conf_error_d
     loss = torch.mean(err)
+
+    print("Orientation error: ", ori_error)
+    print("Distance_error: ", dist_error)
+    print("Theta error: ", conf_error_theta)
+    print("d error: ", conf_error_d)
 
     # Ensure l_hat has norm 1.
     loss += torch.mean((torch.norm(pred[:, :, :3], dim=-1) - 1.) ** 2)
