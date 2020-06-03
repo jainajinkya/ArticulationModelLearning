@@ -103,10 +103,10 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
     err = ori_error + dist_error + conf_error_theta + conf_error_d
     loss = torch.mean(err)
 
-    print("Orientation error: ", ori_error)
-    print("Distance_error: ", dist_error)
-    print("Theta error: ", conf_error_theta)
-    print("d error: ", conf_error_d)
+    print("Orientation error: ", ori_error.mean())
+    print("Distance_error: ", dist_error.mean())
+    print("Theta error: ", conf_error_theta.mean())
+    print("d error: ", conf_error_d.mean())
 
     # Ensure l_hat has norm 1.
     loss += torch.mean((torch.norm(pred[:, :, :3], dim=-1) - 1.) ** 2)
