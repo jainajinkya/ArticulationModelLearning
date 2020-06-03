@@ -13,7 +13,7 @@ class ArticulationDataset(Dataset):
                  ntrain,
                  root_dir,
                  n_dof,
-                 norm_factor=2.5):
+                 norm_factor=1.):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
