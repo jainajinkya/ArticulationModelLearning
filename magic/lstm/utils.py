@@ -198,7 +198,7 @@ def theta_config_error(target, prediction):
     rot_tar = angle_axis_to_rotation_matrix(tar_[:, :3], tar_[:, 6])
     rot_pred = angle_axis_to_rotation_matrix(pred_[:, :3], pred_[:, 6])
     I_ = torch.eye(3).reshape((1, 3, 3))
-    I_ = I_.repeat(rot_tar.size(0), 1, 1)
+    I_ = I_.repeat(rot_tar.size(0), 1, 1).to(tar_.device)
     return torch.norm(I_ - torch.bmm(rot_pred, rot_tar.transpose(1, 2)), dim=(1, 2)).view(target.shape[:2])
 
 
