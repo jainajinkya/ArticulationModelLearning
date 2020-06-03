@@ -87,8 +87,6 @@ class DeepArtModel_v1(nn.Module):
 
 
 def articulation_lstm_loss_spatial_distance_v1(pred, target):
-    import pdb; pdb.set_trace()
-
     """ Based on Spatial distance"""
     pred = pred.view(pred.size(0), -1, 7)[:, 1:, :]  # We don't need the first row as it is for single image
     pred = expand_labels(pred)  # Adding 3rd dimension to m

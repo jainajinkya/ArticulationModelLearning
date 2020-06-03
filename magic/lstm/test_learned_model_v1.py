@@ -198,6 +198,7 @@ if __name__ == "__main__":
                 y_pred = best_model(depth)
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
                 y_pred = y_pred[:, 1:, :]
+                y_pred = expand_labels(y_pred)
 
                 # Scaling back to original values
                 labels = interpret_labels(labels, testloader.normalization_factor)
