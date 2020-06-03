@@ -164,22 +164,24 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     # Based on formula from Plücker Coordinates for Lines in the Space by Prof. Yan-bin Jia
     # Verified by https://keisan.casio.com/exec/system/1223531414
     """
-    norm_cross_prod = torch.norm(torch.cross(target[:, :, :3], prediction[:, :, :3], dim=-1), dim=-1)
+    target_ = target.clone()
+    prediction_ = prediction.clone()
+    norm_cross_prod = torch.norm(torch.cross(target_[:, :, :3], prediction_[:, :, :3], dim=-1), dim=-1)
     dist = torch.zeros_like(norm_cross_prod)
 
     # Checking for Parallel Lines
     if torch.any(norm_cross_prod <= eps):
         zero_idxs = (norm_cross_prod <= eps).nonzero(as_tuple=True)
-        scales = torch.norm(prediction[zero_idxs][:, :3], dim=-1) / torch.norm(target[zero_idxs][:, :3], dim=-1) + eps
-        dist[zero_idxs] = torch.norm(torch.cross(target[zero_idxs][:, :3], (
-                target[zero_idxs][:, 3:6] - prediction[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / (
-                                  torch.mul(target[zero_idxs][:, :3], target[zero_idxs][:, :3]).sum(dim=-1) + eps)
+        scales = torch.norm(prediction_[zero_idxs][:, :3], dim=-1) / torch.norm(target_[zero_idxs][:, :3], dim=-1) + eps
+        dist[zero_idxs] = torch.norm(torch.cross(target_[zero_idxs][:, :3], (
+                target_[zero_idxs][:, 3:6] - prediction_[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / (
+                                  torch.mul(target_[zero_idxs][:, :3], target_[zero_idxs][:, :3]).sum(dim=-1) + eps)
 
     # Skew Lines: Non zero cross product
     nonzero_idxs = (norm_cross_prod > eps).nonzero(as_tuple=True)
     dist[nonzero_idxs] = torch.abs(
-        torch.mul(target[nonzero_idxs][:, :3], prediction[nonzero_idxs][:, 3:6]).sum(dim=-1) + torch.mul(
-            target[nonzero_idxs][:, 3:6], prediction[nonzero_idxs][:, :3]).sum(dim=-1)) / (
+        torch.mul(target_[nonzero_idxs][:, :3], prediction_[nonzero_idxs][:, 3:6]).sum(dim=-1) + torch.mul(
+            target_[nonzero_idxs][:, 3:6], prediction_[nonzero_idxs][:, :3]).sum(dim=-1)) / (
                                  norm_cross_prod[nonzero_idxs] + eps)
     return dist
 
@@ -187,14 +189,16 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
 def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
     """ Input shapes Tensors: Batch X #Images X 8
     range of arccos ins [0, pi)"""
-    return torch.acos(torch.clamp(torch.mul(target[:, :, :3], prediction[:, :, :3]).sum(dim=-1) / (
-            torch.norm(target[:, :, :3], dim=-1) * torch.norm(prediction[:, :, :3], dim=-1) + eps),
+    target_ = target.clone()
+    prediction_ = prediction.clone()
+    return torch.acos(torch.clamp(torch.mul(target_[:, :, :3], prediction_[:, :, :3]).sum(dim=-1) / (
+            torch.norm(target_[:, :, :3], dim=-1) * torch.norm(prediction_[:, :, :3], dim=-1) + eps),
                                   min=-1, max=1))
 
 
 def theta_config_error(target, prediction):
-    tar_ = target.view(-1, 8)
-    pred_ = prediction.view(-1, 8)
+    tar_ = target.view(-1, 8).clone()
+    pred_ = prediction.view(-1, 8).clone()
     rot_tar = angle_axis_to_rotation_matrix(tar_[:, :3], tar_[:, 6])
     rot_pred = angle_axis_to_rotation_matrix(pred_[:, :3], pred_[:, 6])
     I_ = torch.eye(3).reshape((1, 3, 3))
@@ -202,7 +206,7 @@ def theta_config_error(target, prediction):
     return torch.norm(I_ - torch.bmm(rot_pred, rot_tar.transpose(1, 2)), dim=(1, 2), p=2).view(target.shape[:2])
 
 
-def angle_axis_to_rotation_matrix(angle_axis, theta, eps=1e-10):
+def angle_axis_to_rotation_matrix(angle_axis, theta):
     # Stolen from PyTorch geometry library. Modified for our code
     angle_axis_shape = angle_axis.shape
     angle_axis_ = angle_axis.view(-1, 3)
@@ -229,8 +233,10 @@ def angle_axis_to_rotation_matrix(angle_axis, theta, eps=1e-10):
 
 
 def d_config_error(target, prediction):
-    target_d = target[:, :, :3] * target[:, :, 7].unsqueeze_(-1)
-    pred_d = prediction[:, :, :3] * prediction[:, :, 7].unsqueeze_(-1)
+    target_ = target.clone()
+    pred_ = prediction.clone()
+    target_d = target_[:, :, :3] * target_[:, :, 7].unsqueeze_(-1)
+    pred_d = pred_[:, :, :3] * pred_[:, :, 7].unsqueeze_(-1)
     return (target_d - pred_d).norm(dim=-1)
 
 
