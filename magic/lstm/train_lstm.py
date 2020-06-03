@@ -91,8 +91,8 @@ if __name__ == "__main__":
                                       args.test_dir,
                                       n_dof=args.ndof)
         # loss_fn = articulation_lstm_loss_L2
-        loss_fn = articulation_lstm_loss_spatial_distance
-        # loss_fn = articulation_lstm_loss_spatial_distance_v1
+        # loss_fn = articulation_lstm_loss_spatial_distance
+        loss_fn = articulation_lstm_loss_spatial_distance_v1
 
         # init model
         # network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
