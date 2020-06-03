@@ -192,6 +192,48 @@ def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
                                   min=-1, max=1))
 
 
+def theta_config_error(target, prediction):
+    tar_ = target.view(-1, 8)
+    pred_ = prediction.view(-1, 8)
+    rot_tar = angle_axis_to_rotation_matrix(tar_[:, :3], tar_[:, 6])
+    rot_pred = angle_axis_to_rotation_matrix(pred_[:, :3], pred_[:, 6])
+    I_ = torch.eye(3).reshape((1, 3, 3))
+    I_ = I_.repeat(rot_tar.size(0), 1, 1)
+    return torch.norm(I_ - torch.bmm(rot_pred, rot_tar.transpose(1, 2)), dim=(1, 2)).view(target.shape[:2])
+
+
+def angle_axis_to_rotation_matrix(angle_axis, theta, eps=1e-10):
+    # Stolen from PyTorch geometry library. Modified for our code
+    angle_axis_shape = angle_axis.shape
+    angle_axis = angle_axis.view(-1, 3)
+    theta = theta.view(-1, 1)
+
+    k_one = 1.0
+    normed_axes = angle_axis / angle_axis.norm(dim=-1, keepdim=True)
+    wx, wy, wz = torch.chunk(normed_axes, 3, dim=1)
+    cos_theta = torch.cos(theta)
+    sin_theta = torch.sin(theta)
+
+    r00 = cos_theta + wx * wx * (k_one - cos_theta)
+    r10 = wz * sin_theta + wx * wy * (k_one - cos_theta)
+    r20 = -wy * sin_theta + wx * wz * (k_one - cos_theta)
+    r01 = wx * wy * (k_one - cos_theta) - wz * sin_theta
+    r11 = cos_theta + wy * wy * (k_one - cos_theta)
+    r21 = wx * sin_theta + wy * wz * (k_one - cos_theta)
+    r02 = wy * sin_theta + wx * wz * (k_one - cos_theta)
+    r12 = -wx * sin_theta + wy * wz * (k_one - cos_theta)
+    r22 = cos_theta + wz * wz * (k_one - cos_theta)
+    rotation_matrix = torch.cat(
+        [r00, r01, r02, r10, r11, r12, r20, r21, r22], dim=1)
+    return rotation_matrix.view(list(angle_axis_shape[:-1]) + [3, 3])
+
+
+def d_config_error(target, prediction):
+    target_d = target[:, :, :3] * target[:, :, 7].unsqueeze_(-1)
+    pred_d = prediction[:, :, :3] * prediction[:, :, 7].unsqueeze_(-1)
+    return (target_d - pred_d).norm(dim=-1)
+
+
 def quaternion_inner_product(q, r):
     assert q.shape[-1] == 4
     assert r.shape[-1] == 4
@@ -263,6 +305,15 @@ def change_frames(frame_B_wrt_A, pose_wrt_A):
 
 def interpret_labels(label, scale):
     return label[:, :, 3:6] * scale
+
+
+def expand_labels(labels, eps=1e-10):
+    l_hat = labels[:, :, :3]
+    m = labels[:, :, 3:5]
+    m_3 = -((l_hat[:, :, :2] * m).sum(dim=-1) / (l_hat[:, :, 2] + eps))   # Avoiding zero divide error
+    return torch.cat((l_hat, m, m_3.unsqueeze_(-1), labels[:, :, 5:]), dim=-1)
+
+
 
 # Plotting Utils
 def set_axes_radius(ax, origin, radius):
