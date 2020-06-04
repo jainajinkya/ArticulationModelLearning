@@ -314,10 +314,13 @@ def interpret_labels(label, scale):
 
 
 def expand_labels(labels, eps=1e-10):
-    l_hat = labels[:, :, :3]
-    m = labels[:, :, 3:5]
-    m_3 = -((l_hat[:, :, :2] * m).sum(dim=-1) / (l_hat[:, :, 2] + eps))   # Avoiding zero divide error
-    return torch.cat((l_hat, m, m_3.unsqueeze_(-1), labels[:, :, 5:]), dim=-1)
+    if labels.size(-1) == 8:
+        return labels
+    else:
+        l_hat = labels[:, :, :3]
+        m = labels[:, :, 3:5]
+        m_3 = -((l_hat[:, :, :2] * m).sum(dim=-1) / (l_hat[:, :, 2] + eps))   # Avoiding zero divide error
+        return torch.cat((l_hat, m, m_3.unsqueeze_(-1), labels[:, :, 5:]), dim=-1)
 
 
 

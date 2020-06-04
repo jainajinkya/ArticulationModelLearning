@@ -87,9 +87,11 @@ class DeepArtModel_v1(nn.Module):
 
 
 def articulation_lstm_loss_spatial_distance_v1(pred, target):
-    """ Based on Spatial distance"""
-    pred = pred.view(pred.size(0), -1, 7)[:, 1:, :]  # We don't need the first row as it is for single image
-    pred = expand_labels(pred)  # Adding 3rd dimension to m
+    """ Based on Spatial distance
+        Input shapes: Batch X Objects X images
+    """
+    pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
+    pred = expand_labels(pred)  # Adding 3rd dimension to m, if needed
 
     # Spatial Distance loss
     ori_error = orientation_difference_bw_plucker_lines(target, pred)

@@ -50,11 +50,11 @@ class ArticulationDataset(Dataset):
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
-            # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
+            label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
 
-            # Convert screw axis to global coordinates
-            line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
-            label[i, :] = np.concatenate((line_global, [theta], [d]))
+            # # Convert screw axis to global coordinates
+            # line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
+            # label[i, :] = np.concatenate((line_global, [theta], [d]))
 
         # Normalize labels
         label[:, 3:6] /= self.normalization_factor
