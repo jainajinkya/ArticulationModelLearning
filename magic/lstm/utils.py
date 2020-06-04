@@ -164,24 +164,22 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     # Based on formula from Plücker Coordinates for Lines in the Space by Prof. Yan-bin Jia
     # Verified by https://keisan.casio.com/exec/system/1223531414
     """
-    target_ = target
-    prediction_ = prediction
-    norm_cross_prod = torch.norm(torch.cross(target_[:, :, :3], prediction_[:, :, :3], dim=-1), dim=-1)
+    norm_cross_prod = torch.norm(torch.cross(target[:, :, :3], prediction[:, :, :3], dim=-1), dim=-1)
     dist = torch.zeros_like(norm_cross_prod)
 
     # Checking for Parallel Lines
     if torch.any(norm_cross_prod <= eps):
         zero_idxs = (norm_cross_prod <= eps).nonzero(as_tuple=True)
-        scales = torch.norm(prediction_[zero_idxs][:, :3], dim=-1) / torch.norm(target_[zero_idxs][:, :3], dim=-1) + eps
-        dist[zero_idxs] = torch.norm(torch.cross(target_[zero_idxs][:, :3], (
-                target_[zero_idxs][:, 3:6] - prediction_[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / (
-                                  torch.mul(target_[zero_idxs][:, :3], target_[zero_idxs][:, :3]).sum(dim=-1) + eps)
+        scales = torch.norm(prediction[zero_idxs][:, :3], dim=-1) / torch.norm(target[zero_idxs][:, :3], dim=-1) + eps
+        dist[zero_idxs] = torch.norm(torch.cross(target[zero_idxs][:, :3], (
+                target[zero_idxs][:, 3:6] - prediction[zero_idxs][:, 3:6] / scales.unsqueeze(-1))), dim=-1) / (
+                                  torch.mul(target[zero_idxs][:, :3], target[zero_idxs][:, :3]).sum(dim=-1) + eps)
 
     # Skew Lines: Non zero cross product
     nonzero_idxs = (norm_cross_prod > eps).nonzero(as_tuple=True)
     dist[nonzero_idxs] = torch.abs(
-        torch.mul(target_[nonzero_idxs][:, :3], prediction_[nonzero_idxs][:, 3:6]).sum(dim=-1) + torch.mul(
-            target_[nonzero_idxs][:, 3:6], prediction_[nonzero_idxs][:, :3]).sum(dim=-1)) / (
+        torch.mul(target[nonzero_idxs][:, :3], prediction[nonzero_idxs][:, 3:6]).sum(dim=-1) + torch.mul(
+            target[nonzero_idxs][:, 3:6], prediction[nonzero_idxs][:, :3]).sum(dim=-1)) / (
                                  norm_cross_prod[nonzero_idxs] + eps)
     return dist
 
@@ -189,10 +187,8 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
 def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
     """ Input shapes Tensors: Batch X #Images X 8
     range of arccos ins [0, pi)"""
-    target_ = target
-    prediction_ = prediction
-    return torch.acos(torch.clamp(torch.mul(target_[:, :, :3], prediction_[:, :, :3]).sum(dim=-1) / (
-            torch.norm(target_[:, :, :3], dim=-1) * torch.norm(prediction_[:, :, :3], dim=-1) + eps),
+    return torch.acos(torch.clamp(torch.mul(target[:, :, :3], prediction[:, :, :3]).sum(dim=-1) / (
+            torch.norm(target[:, :, :3], dim=-1) * torch.norm(prediction[:, :, :3], dim=-1) + eps),
                                   min=-1, max=1))
 
 
