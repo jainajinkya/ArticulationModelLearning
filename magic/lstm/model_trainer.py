@@ -108,7 +108,8 @@ class ModelTrainer(object):
         start = time.time()
         running_loss = 0
         batches_per_dataset = len(self.trainloader.dataset) / self.trainloader.batch_size
-            
+        self.model.train()  # Put model in training mode
+
         for i, X in enumerate(self.trainloader):
             self.optimizer.zero_grad()
             depth, labels = X['depth'].to(self.device), \
@@ -139,6 +140,7 @@ class ModelTrainer(object):
         start = time.time()
         running_loss = 0
         batches_per_dataset = len(self.testloader.dataset) / self.testloader.batch_size
+        self.model.eval()  # Put batch norm layers in eval mode
         with torch.no_grad():
             for i, X in enumerate(self.testloader):
                 depth, labels = X['depth'].to(self.device), \
