@@ -83,7 +83,7 @@ class DeepArtModel_v1(nn.Module):
         # x_rnn = self.bn_lstm_2(self.fc_lstm_2(x_rnn))
         x_rnn = self.fc_lstm_2(x_rnn)
         x_rnn = F.relu(x_rnn)
-        x_rnn = self.dropout_layer1(x_rnn)
+        # x_rnn = self.dropout_layer1(x_rnn)
         x_rnn = self.fc_lstm_3(x_rnn)
         return x_rnn.view(X_3d.size(0), -1)
 
