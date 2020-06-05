@@ -77,8 +77,8 @@ class DeepArtModel_v1(nn.Module):
 
         # FC layers
         x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)  # Using Last layer of RNN
-        # x_rnn = self.bn_lstm_1(self.fc_lstm_1(x_rnn))
-        x_rnn = self.fc_lstm_1(x_rnn)
+        x_rnn = self.bn_lstm_1(self.fc_lstm_1(x_rnn))
+        # x_rnn = self.fc_lstm_1(x_rnn)
         x_rnn = F.relu(x_rnn)
         # x_rnn = self.bn_lstm_2(self.fc_lstm_2(x_rnn))
         x_rnn = self.fc_lstm_2(x_rnn)
