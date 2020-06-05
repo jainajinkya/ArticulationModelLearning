@@ -124,7 +124,7 @@ class ModelTrainer(object):
                 loss.backward()
                 
                 # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5.)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 20.)
                 # torch.nn.utils.clip_grad_value_(self.model.parameters(), 1.)
 
                 self.optimizer.step()
@@ -141,7 +141,7 @@ class ModelTrainer(object):
         running_loss = 0
         batches_per_dataset = len(self.testloader.dataset) / self.testloader.batch_size
         self.model.eval()  # Put batch norm layers in eval mode
-        
+
         with torch.no_grad():
             for i, X in enumerate(self.testloader):
                 depth, labels = X['depth'].to(self.device), \
