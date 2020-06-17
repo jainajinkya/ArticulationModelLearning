@@ -193,10 +193,10 @@ def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
 
 
 def theta_config_error(target, prediction):
-    tar_ = target.view(-1, 8).clone()
-    pred_ = prediction.view(-1, 8).clone()
-    rot_tar = angle_axis_to_rotation_matrix(tar_[:, :3], tar_[:, 6])
-    rot_pred = angle_axis_to_rotation_matrix(pred_[:, :3], pred_[:, 6])
+    # tar_ = target.view(-1, 8).clone()
+    # pred_ = prediction.view(-1, 8).clone()
+    rot_tar = angle_axis_to_rotation_matrix(target[:, :, :3], target[:, :, 6]).view(-1, 3, 3)
+    rot_pred = angle_axis_to_rotation_matrix(prediction[:, :, :3], prediction[:, :, 6]).view(-1, 3, 3)
     I_ = torch.eye(3).reshape((1, 3, 3))
     I_ = I_.repeat(rot_tar.size(0), 1, 1).to(target.device)
     return torch.norm(I_ - torch.bmm(rot_pred, rot_tar.transpose(1, 2)), dim=(1, 2), p=2).view(target.shape[:2])

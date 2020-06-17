@@ -7,7 +7,7 @@ from torchvision import models
 
 
 class DeepArtModel_v1(nn.Module):
-    def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, drop_p=0.5, n_output=7):
+    def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, drop_p=0.5, n_output=8):
         super(DeepArtModel_v1, self).__init__()
 
         self.fc_res_dim_1 = 512
@@ -90,7 +90,7 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
         Input shapes: Batch X Objects X images
     """
     pred = pred.view(pred.size(0), -1, 8)[:, 1:, :]  # We don't need the first row as it is for single image
-    pred = expand_labels(pred)  # Adding 3rd dimension to m, if needed
+    # pred = expand_labels(pred)  # Adding 3rd dimension to m, if needed
 
     # Spatial Distance loss
     dist_err = orientation_difference_bw_plucker_lines(target, pred) ** 2 + distance_bw_plucker_lines(target, pred) ** 2
