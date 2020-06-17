@@ -77,13 +77,10 @@ class DeepArtModel_v1(nn.Module):
 
         # FC layers
         x_rnn = RNN_out.contiguous().view(-1, self.lstm_hidden_dim)  # Using Last layer of RNN
-        # x_rnn = self.bn_lstm_1(self.fc_lstm_1(x_rnn))
-        x_rnn = self.fc_lstm_1(x_rnn)
+        x_rnn = self.bn_lstm_1(self.fc_lstm_1(x_rnn))
         x_rnn = F.relu(x_rnn)
-        # x_rnn = self.bn_lstm_2(self.fc_lstm_2(x_rnn))
-        x_rnn = self.fc_lstm_2(x_rnn)
+        x_rnn = self.bn_lstm_2(self.fc_lstm_2(x_rnn))
         x_rnn = F.relu(x_rnn)
-        # x_rnn = self.dropout_layer1(x_rnn)
         x_rnn = self.fc_lstm_3(x_rnn)
         return x_rnn.view(X_3d.size(0), -1)
 
@@ -96,15 +93,13 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
     pred = expand_labels(pred)  # Adding 3rd dimension to m, if needed
 
     # Spatial Distance loss
-    ori_error = orientation_difference_bw_plucker_lines(target, pred)
-    dist_error = distance_bw_plucker_lines(target, pred)
+    dist_err = orientation_difference_bw_plucker_lines(target, pred) ** 2 + distance_bw_plucker_lines(target, pred) ** 2
 
     # Configuration Loss
-    # conf_error_theta = theta_config_error(target, pred)
-    # conf_error_d = d_config_error(target, pred)
-    conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
+    # conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
+    conf_err = theta_config_error(target, pred) + d_config_error(target, pred)
 
-    err = ori_error + dist_error + conf_err
+    err = dist_err + conf_err
     loss = torch.mean(err)
 
     # print("Orientation error: ", ori_error.mean())
