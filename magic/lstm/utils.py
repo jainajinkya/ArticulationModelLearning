@@ -193,8 +193,6 @@ def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
 
 
 def theta_config_error(target, prediction):
-    # tar_ = target.view(-1, 8).clone()
-    # pred_ = prediction.view(-1, 8).clone()
     rot_tar = angle_axis_to_rotation_matrix(target[:, :, :3], target[:, :, 6]).view(-1, 3, 3)
     rot_pred = angle_axis_to_rotation_matrix(prediction[:, :, :3], prediction[:, :, 6]).view(-1, 3, 3)
     I_ = torch.eye(3).reshape((1, 3, 3))
@@ -205,8 +203,8 @@ def theta_config_error(target, prediction):
 def angle_axis_to_rotation_matrix(angle_axis, theta):
     # Stolen from PyTorch geometry library. Modified for our code
     angle_axis_shape = angle_axis.shape
-    angle_axis_ = angle_axis.view(-1, 3)
-    theta_ = theta.view(-1, 1)
+    angle_axis_ = angle_axis.contiguous().view(-1, 3)
+    theta_ = theta.contiguous().view(-1, 1)
 
     k_one = 1.0
     normed_axes = angle_axis_ / angle_axis_.norm(dim=-1, keepdim=True)
@@ -229,11 +227,11 @@ def angle_axis_to_rotation_matrix(angle_axis, theta):
 
 
 def d_config_error(target, prediction):
-    target_ = target.clone()
-    pred_ = prediction.clone()
-    target_d = target_[:, :, :3] * target_[:, :, 7].unsqueeze_(-1)
-    pred_d = pred_[:, :, :3] * pred_[:, :, 7].unsqueeze_(-1)
-    return (target_d - pred_d).norm(dim=-1)
+    tar_d = target[:, :, 7].unsqueeze(-1)
+    pred_d = prediction[:, :, 7].unsqueeze(-1)
+    tar_d = target[:, :, :3] * tar_d
+    pred_d = prediction[:, :, :3] * pred_d
+    return (tar_d - pred_d).norm(dim=-1)
 
 
 def quaternion_inner_product(q, r):
