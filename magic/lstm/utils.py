@@ -127,10 +127,20 @@ def detect_model_class(mv_frames):
     #         'params': params}
 
 
-def all_combinations(n):
+def all_combinations(min_val=1, max_val=2):
     idxs = []
-    for r in np.arange(2, n + 1):
-        idxs.append(list(combinations(range(n), r=r)))
+    assert min_val >= 1
+    for r in np.arange(min_val, max_val + 1):
+        idxs.append(list(combinations(range(max_val), r=r)))
+    return [item for sublist in idxs for item in sublist]
+
+
+def sample_combinations(max_val, min_size=1, max_size=2, step=1):
+    idxs = []
+    assert min_size >= 1
+    assert max_size >=min_size
+    for r in np.arange(min_size, max_size + 1, step):
+        idxs.append(list(combinations(range(max_val), r=r)))
     return [item for sublist in idxs for item in sublist]
 
 
