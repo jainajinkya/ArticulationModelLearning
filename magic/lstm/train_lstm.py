@@ -3,7 +3,7 @@ import argparse
 import torch
 import numpy as np
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
-    ArticulationDatasetV1
+    ArticulationDatasetV1, ArticulationDatasetGlobal
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, DeepArtModel
@@ -90,13 +90,23 @@ if __name__ == "__main__":
                                   drop_p=args.drop_p, h_fc_dim=256, n_output=8)
 
     else:  # Default: 'lstm'
-        trainset = ArticulationDataset(ntrain,
+        # trainset = ArticulationDataset(ntrain,
+        #                                args.train_dir,
+        #                                n_dof=args.ndof)
+        #
+        # testset = ArticulationDataset(ntest,
+        #                               args.test_dir,
+        #                               n_dof=args.ndof)
+
+        trainset = ArticulationDatasetGlobal(ntrain,
                                        args.train_dir,
                                        n_dof=args.ndof)
 
-        testset = ArticulationDataset(ntest,
+        testset = ArticulationDatasetGlobal(ntest,
                                       args.test_dir,
                                       n_dof=args.ndof)
+
+
         # loss_fn = articulation_lstm_loss_L2
         # loss_fn = articulation_lstm_loss_spatial_distance
         loss_fn = articulation_lstm_loss_spatial_distance_v1
