@@ -13,6 +13,7 @@ from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
 from matplotlib.ticker import FuncFormatter
+from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -186,7 +187,9 @@ if __name__ == "__main__":
 
         # load model
         # best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
-        best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
+        # best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
+        best_model = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+                                     drop_p=args.drop_p, n_output=8)
         best_model.load_state_dict(torch.load(os.path.join(args.model_dir, args.model_name + '.net')))
         best_model.float().to(device)
         best_model.eval()
