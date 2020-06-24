@@ -4,8 +4,10 @@ from itertools import combinations
 import h5py
 import numpy as np
 import torch
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line, change_frames, all_combinations, sample_combinations
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line, change_frames, \
+    sample_combinations
 from torch.utils.data import Dataset
+
 
 class ArticulationDataset(Dataset):
     def __init__(self,
@@ -76,7 +78,7 @@ class ArticulationDatasetGlobal(Dataset):
 
         self.root_dir = root_dir
         self.labels_data = None
-        self.pair_idxs = sample_combinations((16, min_size=16, max_size=16, step=1))  # no. of total images available = 16
+        self.pair_idxs = sample_combinations(16, min_size=16, max_size=16, step=1)  # no. of total images available = 16
         self.length = ntrain * len(self.pair_idxs)
         self.n_dof = n_dof
         self.normalization_factor = norm_factor
@@ -106,9 +108,9 @@ class ArticulationDatasetGlobal(Dataset):
         label = np.empty((len(pair_idx) - 1, 8))
         pt0 = obj_data['moving_frame_in_world'][pair_idx[0], :]  # Fixed reference frame
 
-        for i in range(len(pair_idx)-1):
+        for i in range(len(pair_idx) - 1):
             pt1 = obj_data['moving_frame_in_world'][pair_idx[i], :]
-            pt2 = obj_data['moving_frame_in_world'][pair_idx[i+1], :]
+            pt2 = obj_data['moving_frame_in_world'][pair_idx[i + 1], :]
             pt1_T_pt2 = change_frames(pt1, pt2)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
