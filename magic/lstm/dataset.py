@@ -82,6 +82,7 @@ class ArticulationDatasetGlobal(Dataset):
         self.length = ntrain * len(self.pair_idxs)
         self.n_dof = n_dof
         self.normalization_factor = norm_factor
+        self.img_size = (108, 192)
 
     def __len__(self):
         return self.length
