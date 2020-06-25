@@ -265,7 +265,8 @@ if __name__ == "__main__":
         plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
         percent_scale = 1 / binwidth
         plt.gca().yaxis.set_major_formatter(formatter)
-        plt.gca().set_ylim([0., 100.])
+        plt.ylim(ymin=0., ymax=100.)
+        plt.xlim()
         plt.xlabel("Error (rad)")
         plt.ylabel("Percentage of test objects")
         plt.title("Histogram of mean test errors in theta")
@@ -289,7 +290,7 @@ if __name__ == "__main__":
         plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
         percent_scale = 1 / binwidth
         plt.gca().yaxis.set_major_formatter(formatter)
-        plt.gca().set_ylim([0., 100.])
+        plt.ylim(ymin=0., ymax=100.)
         plt.xlabel("Error (cm)")
         plt.ylabel("Percentage of test objects")
         plt.title("Histogram of mean test errors in d")
@@ -323,7 +324,7 @@ if __name__ == "__main__":
              density=True)
     percent_scale = 1 / binwidth
     plt.gca().yaxis.set_major_formatter(formatter)
-    plt.gca().set_ylim([0., 100.])
+    plt.ylim(ymin=0., ymax=100.)
     plt.xlabel("Orientation error (rad)")
     plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in screw axis orientation")
@@ -347,7 +348,7 @@ if __name__ == "__main__":
     plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
     percent_scale = 1 / binwidth
     plt.gca().yaxis.set_major_formatter(formatter)
-    plt.gca().set_ylim([0., 100.])
+    plt.ylim(ymin=0., ymax=100.)
     plt.xlabel("Spatial distance error (cm)")
     plt.ylabel("Percentage of test objects")
     plt.title("Histogram of mean test errors in spatial distance")
