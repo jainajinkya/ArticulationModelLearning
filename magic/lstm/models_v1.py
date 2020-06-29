@@ -85,7 +85,7 @@ class DeepArtModel_v1(nn.Module):
         return x_rnn.view(X_3d.size(0), -1)
 
 
-def articulation_lstm_loss_spatial_distance_v1(pred, target):
+def articulation_lstm_loss_spatial_distance_v1(pred, target, wt_on_ortho=1.):
     """ Based on Spatial distance
         Input shapes: Batch X Objects X images
     """
@@ -97,7 +97,7 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
 
     # Configuration Loss
     # conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
-    conf_err = theta_config_error(target, pred) + d_config_error(target, pred)
+    conf_err = theta_config_error(target, pred)**2 + d_config_error(target, pred)**2
 
     err = dist_err + conf_err
     loss = torch.mean(err)
@@ -109,6 +109,9 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target):
 
     # Ensure l_hat has norm 1.
     loss += torch.mean((torch.norm(pred[:, :, :3], dim=-1) - 1.) ** 2)
+
+    # Ensure orthogonality between l_hat and m
+    loss += wt_on_ortho * torch.mean(torch.abs(torch.sum(torch.mul(pred[:, :, :3], pred[:, :, 3:6]), dim=-1)))
 
     if torch.isnan(loss):
         print("target: Min: {},  Max{}".format(target.min(), target.max()))

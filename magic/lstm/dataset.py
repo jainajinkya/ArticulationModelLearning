@@ -43,8 +43,9 @@ class ArticulationDataset(Dataset):
 
         label = np.empty((len(moving_body_poses) - 1, 8))
 
+        pt1 = moving_body_poses[0, :]   # Fixed common reference frame
         for i in range(len(moving_body_poses) - 1):
-            pt1 = moving_body_poses[i, :]
+            # pt1 = moving_body_poses[i, :]
             pt2 = moving_body_poses[i + 1, :]
             pt1_T_pt2 = change_frames(pt1, pt2)
 
