@@ -255,7 +255,9 @@ def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
     return torch.acos(torch.clamp(2 * quaternion_inner_product(q1, q2) ** 2 - 1, -1 + eps, 1 - eps))
 
 
-def transform_plucker_line(line, trans, quat):
+def transform_plucker_line_to_parent_of_this(line, trans, quat):
+    # Ref: Section 3.4, A. Bartoli and P. Sturm, “The 3D line motion matrix and alignment of line reconstructions,”
+    # Int. J. Comput. Vis., vol. 57, no. 3, pp. 159–178, 2004.
     transform = np.zeros((6, 6))
     rot_mat = tf3d.quaternions.quat2mat(quat)
     t_mat = to_skew_symmetric_matrix(trans)

@@ -4,8 +4,8 @@ from itertools import combinations
 import h5py
 import numpy as np
 import torch
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line, change_frames, \
-    sample_combinations
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line_to_parent_of_this, \
+    change_frames, sample_combinations
 from torch.utils.data import Dataset
 
 
@@ -79,8 +79,9 @@ class ArticulationDatasetGlobal(Dataset):
 
         self.root_dir = root_dir
         self.labels_data = None
-        self.pair_idxs = sample_combinations(16, min_size=16, max_size=16, step=1)  # no. of total images available = 16
-        self.length = ntrain * len(self.pair_idxs)
+        # self.pair_idxs = sample_combinations(16, min_size=16, max_size=16, step=1)  # no. of total images available = 16
+        # self.length = ntrain * len(self.pair_idxs)
+        self.length = ntrain
         self.n_dof = n_dof
         self.normalization_factor = norm_factor
         self.img_size = (108, 192)
@@ -92,36 +93,30 @@ class ArticulationDatasetGlobal(Dataset):
         if self.labels_data is None:
             self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
 
-        obj_idx = int(idx / len(self.pair_idxs))
-        pair_idx = self.pair_idxs[idx % len(self.pair_idxs)]
-
         # One Sample for us corresponds to one instantiation of an object type
-        obj_data = self.labels_data['obj_' + str(obj_idx).zfill(6)]
+        obj_data = self.labels_data['obj_' + str(idx).zfill(6)]
 
-        # Load depth images
-        depth_imgs = torch.empty(size=(len(pair_idx), self.img_size[0], self.img_size[1]))
-        for i, idx in enumerate(pair_idx):
-            depth_imgs[i, :, :] = torch.from_numpy(obj_data['depth_imgs'][idx])
-
+        # Load depth image
+        depth_imgs = torch.tensor(obj_data['depth_imgs'])
         depth_imgs.unsqueeze_(1).float()
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
         # Load labels
-        label = np.empty((len(pair_idx) - 1, 8))
-        pt0 = obj_data['moving_frame_in_world'][pair_idx[0], :]  # Fixed reference frame
+        moving_body_poses = obj_data['moving_frame_in_world']
+        label = np.empty((len(moving_body_poses) - 1, 8))
 
-        for i in range(len(pair_idx) - 1):
-            pt1 = obj_data['moving_frame_in_world'][pair_idx[i], :]
-            pt2 = obj_data['moving_frame_in_world'][pair_idx[i + 1], :]
+        pt1 = moving_body_poses[0, :]   # Fixed common reference frame
+        for i in range(len(moving_body_poses) - 1):
+            pt2 = moving_body_poses[i + 1, :]
             pt1_T_pt2 = change_frames(pt1, pt2)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
-            # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
 
             # Convert screw axis to global coordinates
-            line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt0[:3], quat=pt0[3:])
+            line_global = transform_plucker_line_to_parent_of_this(np.concatenate((l_hat, m)),
+                                                                   trans=pt1[:3], quat=pt1[3:])
             label[i, :] = np.concatenate((line_global, [theta], [d]))
 
         # Normalize labels
@@ -132,6 +127,49 @@ class ArticulationDatasetGlobal(Dataset):
                   'label': label}
 
         return sample
+
+    # def __getitem__(self, idx):
+    #     if self.labels_data is None:
+    #         self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
+    #
+    #     obj_idx = int(idx / len(self.pair_idxs))
+    #     pair_idx = self.pair_idxs[idx % len(self.pair_idxs)]
+    #
+    #     # One Sample for us corresponds to one instantiation of an object type
+    #     obj_data = self.labels_data['obj_' + str(obj_idx).zfill(6)]
+    #
+    #     # Load depth images
+    #     depth_imgs = torch.empty(size=(len(pair_idx), self.img_size[0], self.img_size[1]))
+    #     for i, idx in enumerate(pair_idx):
+    #         depth_imgs[i, :, :] = torch.from_numpy(obj_data['depth_imgs'][idx])
+    #
+    #     depth_imgs.unsqueeze_(1).float()
+    #     depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
+    #
+    #     # Load labels
+    #     label = np.empty((len(pair_idx) - 1, 8))
+    #     pt1 = obj_data['moving_frame_in_world'][pair_idx[0], :]  # Fixed reference frame
+    #
+    #     for i in range(len(pair_idx) - 1):
+    #         pt2 = obj_data['moving_frame_in_world'][pair_idx[i + 1], :]
+    #         pt1_T_pt2 = change_frames(pt1, pt2)
+    #
+    #         # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
+    #         l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+    #                                                 quat_in_wxyz=pt1_T_pt2[3:])
+    #
+    #         # Convert screw axis to global coordinates
+    #         line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
+    #         label[i, :] = np.concatenate((line_global, [theta], [d]))
+    #
+    #     # Normalize labels
+    #     label[:, 3:6] /= self.normalization_factor
+    #
+    #     label = torch.from_numpy(label).float()
+    #     sample = {'depth': depth_imgs,
+    #               'label': label}
+    #
+    #     return sample
 
 
 #
