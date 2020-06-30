@@ -25,7 +25,7 @@ def dual_quaternion_to_screw(dq, tol=1e-6):
 
     if theta < tol or abs(theta - np.pi) < tol:
         t_vec = dq.translation()
-        l_hat = t_vec / np.linalg.norm(t_vec)
+        l_hat = t_vec / (np.linalg.norm(t_vec) + 1e-10)
         theta = tol  # This makes sure that tan(theta) is defined
     else:
         t_vec = (2 * tf3d.quaternions.qmult(dq.dual.data, tf3d.quaternions.qconjugate(dq.real.data)))[
