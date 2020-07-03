@@ -221,8 +221,8 @@ if __name__ == "__main__":
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
                 y_pred = y_pred[:, 1:, :]
 
-                labels = interpret_labels(labels, testset.norm_factor)  # Scaling m appropriately
-                y_pred = interpret_labels(y_pred, testset.norm_factor)
+                labels = interpret_labels(labels, testset.normalization_factor)  # Scaling m appropriately
+                y_pred = interpret_labels(y_pred, testset.normalization_factor)
 
                 # Orientation error
                 ori_err_std, ori_err_mean = torch.std_mean(torch.acos(
