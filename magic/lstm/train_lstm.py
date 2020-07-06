@@ -36,6 +36,7 @@ if __name__ == "__main__":
     parser.add_argument('--wts-dir', type=str, default='models/', help='Dir of saved model wts')
     parser.add_argument('--prior-wts', type=str, default='test', help='Name of saved model wts')
     parser.add_argument('--fix-seed', action='store_true', default=False, help='Should fix seed or not')
+
     args = parser.parse_args()
 
     print(args)
