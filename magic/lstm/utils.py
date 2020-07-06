@@ -303,8 +303,9 @@ def change_frames(frame_B_wrt_A, pose_wrt_A):
     return np.concatenate((trans, quat))  # return quat in wxyz
 
 
-def interpret_labels(label, scale):
-    return label[:, :, 3:6] * scale
+def interpret_labels_ours(label, scale):
+    label[:, :, 3:6] *= scale
+    return label
 
 
 def expand_labels(labels, eps=1e-10):
