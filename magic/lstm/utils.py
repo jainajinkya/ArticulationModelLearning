@@ -5,7 +5,6 @@ import h5py
 import numpy as np
 import torch
 import transforms3d as tf3d
-from SyntheticArticulatedData.generation.utils import change_frames
 
 
 # Dual Quaternion utils
@@ -26,7 +25,7 @@ def dual_quaternion_to_screw(dq, tol=1e-6):
 
     if theta < tol or abs(theta - np.pi) < tol:
         t_vec = dq.translation()
-        l_hat = t_vec / np.linalg.norm(t_vec)
+        l_hat = t_vec / (np.linalg.norm(t_vec) + 1e-10)
         theta = tol  # This makes sure that tan(theta) is defined
     else:
         t_vec = (2 * tf3d.quaternions.qmult(dq.dual.data, tf3d.quaternions.qconjugate(dq.real.data)))[
@@ -89,21 +88,21 @@ def detect_model_class(mv_frames):
     return model_class_name
 
 
-def interpret_label(label):
-    label = label.view(-1, 8)
-    l_hat_array = label[:, :3]
-    m_array = label[:, 3:6]
-    q_array = label[:, 6]
-    d_array = label[:, 7]
-
-    return {
-        'screw_axis': (torch.mean(l_hat_array, dim=0).cpu(),
-                       torch.mean(m_array, dim=0).cpu()),
-        'l_hat_array': l_hat_array.cpu(),
-        'm_array': m_array.cpu(),
-        'theta_array': q_array.cpu(),
-        'd_array': d_array.cpu()
-    }
+# def interpret_label(label):
+#     label = label.view(-1, 8)
+#     l_hat_array = label[:, :3]
+#     m_array = label[:, 3:6]
+#     q_array = label[:, 6]
+#     d_array = label[:, 7]
+#
+#     return {
+#         'screw_axis': (torch.mean(l_hat_array, dim=0).cpu(),
+#                        torch.mean(m_array, dim=0).cpu()),
+#         'l_hat_array': l_hat_array.cpu(),
+#         'm_array': m_array.cpu(),
+#         'theta_array': q_array.cpu(),
+#         'd_array': d_array.cpu()
+#     }
 
     # # A single label consists of reference frame dual quaternion and moving frame quats
     # ref_dq = label[0, :]
@@ -193,6 +192,48 @@ def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
                                   min=-1, max=1))
 
 
+def theta_config_error(target, prediction):
+    rot_tar = angle_axis_to_rotation_matrix(target[:, :, :3], target[:, :, 6]).view(-1, 3, 3)
+    rot_pred = angle_axis_to_rotation_matrix(prediction[:, :, :3], prediction[:, :, 6]).view(-1, 3, 3)
+    I_ = torch.eye(3).reshape((1, 3, 3))
+    I_ = I_.repeat(rot_tar.size(0), 1, 1).to(target.device)
+    return torch.norm(I_ - torch.bmm(rot_pred, rot_tar.transpose(1, 2)), dim=(1, 2), p=2).view(target.shape[:2])
+
+
+def angle_axis_to_rotation_matrix(angle_axis, theta):
+    # Stolen from PyTorch geometry library. Modified for our code
+    angle_axis_shape = angle_axis.shape
+    angle_axis_ = angle_axis.contiguous().view(-1, 3)
+    theta_ = theta.contiguous().view(-1, 1)
+
+    k_one = 1.0
+    normed_axes = angle_axis_ / angle_axis_.norm(dim=-1, keepdim=True)
+    wx, wy, wz = torch.chunk(normed_axes, 3, dim=1)
+    cos_theta = torch.cos(theta_)
+    sin_theta = torch.sin(theta_)
+
+    r00 = cos_theta + wx * wx * (k_one - cos_theta)
+    r10 = wz * sin_theta + wx * wy * (k_one - cos_theta)
+    r20 = -wy * sin_theta + wx * wz * (k_one - cos_theta)
+    r01 = wx * wy * (k_one - cos_theta) - wz * sin_theta
+    r11 = cos_theta + wy * wy * (k_one - cos_theta)
+    r21 = wx * sin_theta + wy * wz * (k_one - cos_theta)
+    r02 = wy * sin_theta + wx * wz * (k_one - cos_theta)
+    r12 = -wx * sin_theta + wy * wz * (k_one - cos_theta)
+    r22 = cos_theta + wz * wz * (k_one - cos_theta)
+    rotation_matrix = torch.cat(
+        [r00, r01, r02, r10, r11, r12, r20, r21, r22], dim=1)
+    return rotation_matrix.view(list(angle_axis_shape[:-1]) + [3, 3])
+
+
+def d_config_error(target, prediction):
+    tar_d = target[:, :, 7].unsqueeze(-1)
+    pred_d = prediction[:, :, 7].unsqueeze(-1)
+    tar_d = target[:, :, :3] * tar_d
+    pred_d = prediction[:, :, :3] * pred_d
+    return (tar_d - pred_d).norm(dim=-1)
+
+
 def quaternion_inner_product(q, r):
     assert q.shape[-1] == 4
     assert r.shape[-1] == 4
@@ -200,8 +241,81 @@ def quaternion_inner_product(q, r):
     return torch.bmm(q.view(-1, 1, 4), r.view(-1, 4, 1)).view(original_shape[:-1])
 
 
-def difference_between_quaternions_tensors(q1, q2):
-    return torch.acos(2 * quaternion_inner_product(q1, q2) ** 2 - 1)
+def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
+    return torch.acos(torch.clamp(2 * quaternion_inner_product(q1, q2) ** 2 - 1, -1 + eps, 1 - eps))
+
+
+def transform_plucker_line(line, trans, quat):
+    transform = np.zeros((6, 6))
+    rot_mat = tf3d.quaternions.quat2mat(quat)
+    t_mat = to_skew_symmetric_matrix(trans)
+    transform[0:3, 0:3] = rot_mat
+    transform[3:6, 0:3] = np.matmul(t_mat, rot_mat)
+    transform[3:6, 3:6] = rot_mat
+    return np.matmul(transform, line)
+
+
+def to_skew_symmetric_matrix(v):
+    return np.array([[0., -v[2], v[1]],
+                     [v[2], 0., -v[0]],
+                     [-v[1], v[0], 0.]])
+
+
+def transform_plucker_line_batch(line, trans, quat):
+    # line : <l_hat, m>
+    transform = torch.zeros((6, 6))
+    rot_mat = torch.from_numpy(tf3d.quaternions.quat2mat(quat))
+    t_mat = to_skew_symmetric_matrix_batch(trans)
+    transform[0:3, 3:6] = rot_mat
+    transform[3:6, 0:3] = rot_mat
+    transform[3:6, 3:6] = torch.matmul(t_mat, rot_mat)
+    return torch.matmul(transform, line.transpose(-1, -2)).transpose(-1, -2)
+
+
+def to_skew_symmetric_matrix_batch(vec):
+    assert vec.shape[-1] == 3
+    original_shape = vec.size()
+    vec = vec.view(-1, 3)
+    skew_mat = torch.zeros((vec.size(0), 3, 3))
+    skew_mat[:, 0, 1] = -vec[:, 2]
+    skew_mat[:, 0, 2] = vec[:, 1]
+    skew_mat[:, 1, 0] = vec[:, 2]
+    skew_mat[:, 1, 2] = -vec[:, 0]
+    skew_mat[:, 2, 0] = -vec[:, 1]
+    skew_mat[:, 2, 1] = vec[:, 0]
+    return skew_mat.view(list(original_shape[:-1]) + [3, 3])
+
+
+def change_frames(frame_B_wrt_A, pose_wrt_A):
+    A_T_pose = tf3d.affines.compose(T=pose_wrt_A[:3],
+                                    R=tf3d.quaternions.quat2mat(pose_wrt_A[3:]),  # quat in  wxyz
+                                    Z=np.ones(3))
+    A_rot_mat_B = tf3d.quaternions.quat2mat(frame_B_wrt_A[3:])
+
+    # Following as described in Craig
+    B_T_A = tf3d.affines.compose(T=-A_rot_mat_B.T.dot(frame_B_wrt_A[:3]),
+                                 R=A_rot_mat_B.T,
+                                 Z=np.ones(3))
+
+    B_T_pose = B_T_A.dot(A_T_pose)
+    trans, rot, scale, _ = tf3d.affines.decompose44(B_T_pose)
+    quat = tf3d.quaternions.mat2quat(rot)
+    return np.concatenate((trans, quat))  # return quat in wxyz
+
+
+def interpret_labels(label, scale):
+    return label[:, :, 3:6] * scale
+
+
+def expand_labels(labels, eps=1e-10):
+    if labels.size(-1) == 8:
+        return labels
+    else:
+        l_hat = labels[:, :, :3]
+        m = labels[:, :, 3:5]
+        m_3 = -((l_hat[:, :, :2] * m).sum(dim=-1) / (l_hat[:, :, 2] + eps))   # Avoiding zero divide error
+        return torch.cat((l_hat, m, m_3.unsqueeze_(-1), labels[:, :, 5:]), dim=-1)
+
 
 
 # Plotting Utils

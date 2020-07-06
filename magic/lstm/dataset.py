@@ -1,29 +1,26 @@
 import os
-from itertools import permutations, combinations
+from itertools import combinations
 
-import dq3d
-import numpy as np
 import h5py
+import numpy as np
 import torch
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line, change_frames
 from torch.utils.data import Dataset
-from dq3d import quat, dualquat
-import transforms3d as tf3d
-
-from ArticulationModelLearning.magic.lstm.utils import quat_as_wxyz, transform_to_screw, quat_as_xyzw, all_combinations
-from SyntheticArticulatedData.generation.utils import change_frames
 
 
 class ArticulationDataset(Dataset):
     def __init__(self,
                  ntrain,
                  root_dir,
-                 n_dof):
+                 n_dof,
+                 norm_factor=1.):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
         self.labels_data = None
         self.length = ntrain
         self.n_dof = n_dof
+        self.normalization_factor = norm_factor
 
     def __len__(self):
         return self.length
@@ -31,8 +28,6 @@ class ArticulationDataset(Dataset):
     def __getitem__(self, idx):
         if self.labels_data is None:
             self.labels_data = h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r')
-
-        # with h5py.File(os.path.join(self.root_dir, 'complete_data.hdf5'), 'r') as labels_data:
 
         # One Sample for us corresponds to one instantiation of an object type
         obj_data = self.labels_data['obj_' + str(idx).zfill(6)]
@@ -47,32 +42,30 @@ class ArticulationDataset(Dataset):
 
         label = np.empty((len(moving_body_poses) - 1, 8))
 
+        pt1 = moving_body_poses[0, :]   # Fixed common reference frame
         for i in range(len(moving_body_poses) - 1):
-            pt1 = moving_body_poses[i, :]
+            # pt1 = moving_body_poses[i, :]
             pt2 = moving_body_poses[i + 1, :]
             pt1_T_pt2 = change_frames(pt1, pt2)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
-            # print("Screw notation: {}\t{}\t{}\t{}".format(np.round(l_hat, 4),
-            #                                               np.round(m, 4),
-            #                                               np.round(theta, 4),
-            #                                               np.round(d, 4)))
-            label[i, :] = np.concatenate((l_hat, m, [theta], [d]))
+            label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
 
-            # # Generating labels in dual quaternions
-            # dq = dq3d.dualquat(dq3d.quat(quat_as_xyzw(pt1_T_pt2[3:])), pt1_T_pt2[:3])
-            # # print("Dual Quaternion: {}\t{}".format(np.round(dq.real.data, 4),
-            # #                                        np.round(dq.dual.data, 4)))
-            # label[i, :] = np.concatenate((np.array([dq.real.w, dq.real.x, dq.real.y, dq.real.z]),
-            #                               np.array([dq.dual.w, dq.dual.x, dq.dual.y, dq.dual.z])))
+            # # Convert screw axis to global coordinates
+            # line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
+            # label[i, :] = np.concatenate((line_global, [theta], [d]))
+
+        # Normalize labels
+        label[:, 3:6] /= self.normalization_factor
 
         label = torch.from_numpy(label).float()
         sample = {'depth': depth_imgs,
                   'label': label}
 
         return sample
+
 
 #
 # ### LSTM with Data Augmentation

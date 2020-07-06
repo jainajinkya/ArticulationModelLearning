@@ -5,8 +5,7 @@ import h5py
 import torch
 import numpy as np
 
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw
-from SyntheticArticulatedData.generation.utils import change_frames
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, change_frames
 
 
 def create_dataset_2_imgs(root_dir):

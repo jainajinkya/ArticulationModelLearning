@@ -1,12 +1,15 @@
 import argparse
 
 import torch
+import numpy as np
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
     ArticulationDatasetV1
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
-    articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
+	articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
     DeepArtModel, articulation_lstm_loss_L2
+from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, articulation_lstm_loss_spatial_distance_v1
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -32,6 +35,7 @@ if __name__ == "__main__":
     parser.add_argument('--load-wts', action='store_true', default=False, help='Should load model wts from prior run?')
     parser.add_argument('--wts-dir', type=str, default='models/', help='Dir of saved model wts')
     parser.add_argument('--prior-wts', type=str, default='test', help='Name of saved model wts')
+    parser.add_argument('--fix-seed', action='store_true', default=False, help='Should fix seed or not')
     args = parser.parse_args()
 
     print(args)
@@ -39,6 +43,11 @@ if __name__ == "__main__":
 
     ntrain = args.ntrain * args.aug_multi
     ntest = args.ntest * args.aug_multi
+
+    if args.fix_seed:
+        torch.manual_seed(1)
+        np.random.seed(1)
+
 
     # elif args.model_type == 'lstm_aug':
     #     trainset = ArticulationDatasetV2(ntrain,
@@ -90,14 +99,18 @@ if __name__ == "__main__":
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
                                       n_dof=args.ndof)
+
         loss_fn = articulation_lstm_loss_L2
         # loss_fn = articulation_lstm_loss_spatial_distance
+        # loss_fn = articulation_lstm_loss_spatial_distance_v1
 
         # init model
         # network = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
         #                           drop_p=args.drop_p, h_fc_dim=256, n_output=8)
-        network = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                               drop_p=args.drop_p, h_fc_dim=256, n_output=8)
+        # network = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+        #                        drop_p=args.drop_p, h_fc_dim=256, n_output=8)
+        network = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+                                  drop_p=args.drop_p, n_output=8)
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                              shuffle=True, num_workers=args.nwork,

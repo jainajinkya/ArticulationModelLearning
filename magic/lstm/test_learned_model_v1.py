@@ -1,35 +1,20 @@
 import argparse
-import copy
 import os
 
 import matplotlib
 import numpy as np
+import plotly.graph_objects as go
 import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
 from ArticulationModelLearning.magic.lstm.models import DeepArtModel
-from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors
+from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors, interpret_labels
 from GeneralizingKinematics.magic.mixture import mdn
 from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
-from matplotlib.ticker import FuncFormatter
-from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
-
-def to_percent(y, position):
-    # Ignore the passed in position. This has the effect of scaling the default
-    # tick locations.
-    global percent_scale
-    s = str(round(100 * y / percent_scale, 3))
-
-    # The percent symbol needs escaping in latex
-    if matplotlib.rcParams['text.usetex'] is True:
-        return s + r'$\%$'
-    else:
-        return s + '%'
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test model for articulated object dataset.")
@@ -65,10 +50,6 @@ if __name__ == "__main__":
         device = torch.device(args.device)
     else:
         device = torch.device('cpu')
-
-    # Plotting Histograms as percentages
-    formatter = FuncFormatter(to_percent)
-    global percent_scale
 
     if args.model_type == 'ben':
         print("Testing Model: Ben et al.")
@@ -154,30 +135,29 @@ if __name__ == "__main__":
         plt.ylabel("Error in Config")
         plt.title("Test error in Configurations")
         plt.tight_layout()
-        plt.savefig(output_dir + '/config_err.png')
+        plt.savefig(output_dir + '/theta_err.png')
         plt.close(fig)
 
-        fig = plt.figure(31)
-        data = copy.copy(all_q_err_mean.numpy())
-        if args.obj in ['drawer']:
+        binwidth = 0.005
+        data = all_q_err_mean.numpy()
+        if args.obj in {'drawer'}:
             data *= 100.
-            binwidth = 0.5
+            binwidth *= 100.
             title = "Histogram of mean test errors in d"
             x_label = "Error (cm)"
         else:
-            binwidth = 0.05
             x_label = "Error (rad)"
             title = "Histogram of mean test errors in theta"
 
-        plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
-        percent_scale = 1 / binwidth
-        plt.gca().yaxis.set_major_formatter(formatter)
-        plt.xlabel(x_label)
-        plt.ylabel("Percentage of test objects")
-        plt.title(title)
-        plt.tight_layout()
-        plt.savefig(output_dir + '/config_err_hist.png')
-        plt.close(fig)
+        counts, bins = np.histogram(data, bins=np.arange(0., data.max() + binwidth, binwidth))
+        # bins = 0.5 * (bins[:-1] + bins[1:])
+        fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+        fig1.update_layout(
+            title_text=title,  # title of plot
+            xaxis_title_text=x_label,  # xaxis label
+            yaxis_title_text='% test objects',  # yaxis label
+            )
+        fig1.write_image(output_dir + '/config_err_hist.png')
 
     elif args.model_type == 'li':
         print("Testing Model: Li et al.")
@@ -187,9 +167,7 @@ if __name__ == "__main__":
 
         # load model
         # best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
-        #best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
-        best_model = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=8)
-        
+        best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
         best_model.load_state_dict(torch.load(os.path.join(args.model_dir, args.model_name + '.net')))
         best_model.float().to(device)
         best_model.eval()
@@ -220,6 +198,11 @@ if __name__ == "__main__":
                 y_pred = best_model(depth)
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
                 y_pred = y_pred[:, 1:, :]
+                y_pred = expand_labels(y_pred)
+
+                # Scaling back to original values
+                labels = interpret_labels(labels, testloader.normalization_factor)
+                y_pred = interpret_labels(y_pred, testloader.normalization_factor)
 
                 # Orientation error
                 ori_err_std, ori_err_mean = torch.std_mean(torch.acos(
@@ -259,22 +242,20 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/theta_err.png')
         plt.close(fig)
 
-        fig = plt.figure(31)
         data = all_q_err_mean.numpy()
         binwidth = 0.005
-        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
-        percent_scale = 1 / binwidth
-        plt.gca().yaxis.set_major_formatter(formatter)
-        plt.xlabel("Error (rad)")
-        plt.ylabel("Percentage of test objects")
-        plt.title("Histogram of mean test errors in theta")
-        plt.tight_layout()
-        plt.savefig(output_dir + '/theta_err_hist.png')
-        plt.close(fig)
+        counts, bins = np.histogram(data, bins=np.arange(0., data.max() + binwidth, binwidth))
+        # bins = 0.5 * (bins[:-1] + bins[1:])
+        fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+        fig1.update_layout(
+            title_text='Histogram of mean test errors in theta',  # title of plot
+            xaxis_title_text='Config Error (rad)',  # xaxis label
+            yaxis_title_text='% test objects',  # yaxis label
+            )
+        fig1.write_image(output_dir + '/theta_err_hist.png')
 
         fig = plt.figure(4)
-        plt.errorbar(x_axis, all_d_err_mean.numpy() * 100., all_d_err_std.numpy() * 100., capsize=3., capthick=1.,
-                     ls='none')
+        plt.errorbar(x_axis, all_d_err_mean.numpy() * 100., all_d_err_std.numpy() * 100., capsize=3., capthick=1., ls='none')
         plt.xlabel("Test object number")
         plt.ylabel("Error (cm)")
         plt.title("Test error in d")
@@ -282,18 +263,17 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/d_err.png')
         plt.close(fig)
 
-        fig = plt.figure(41)
-        data = copy.copy(all_d_err_mean.numpy()) * 100.
+        data = all_d_err_mean.numpy() * 100.
         binwidth = 0.5
-        plt.hist(data, bins=np.arange(0., max(data) + binwidth, binwidth), density=True)
-        percent_scale = 1 / binwidth
-        plt.gca().yaxis.set_major_formatter(formatter)
-        plt.xlabel("Error (cm)")
-        plt.ylabel("Percentage of test objects")
-        plt.title("Histogram of mean test errors in d")
-        plt.tight_layout()
-        plt.savefig(output_dir + '/d_err_hist.png')
-        plt.close(fig)
+        counts, bins = np.histogram(data, bins=np.arange(0., data.max() + binwidth, binwidth))
+        # bins = 0.5 * (bins[:-1] + bins[1:])
+        fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+        fig1.update_layout(
+            title_text='Histogram of mean test errors in d',  # title of plot
+            xaxis_title_text='Config Error (cm)',  # xaxis label
+            yaxis_title_text='% test objects',  # yaxis label
+            )
+        fig1.write_image(output_dir + '/d_err_hist.png')
 
         # # Storing data for particle filter analysis
         # p_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(), 'errors': all_errs.numpy()}
@@ -314,19 +294,17 @@ if __name__ == "__main__":
     plt.savefig(output_dir + '/orientation_test_error.png')
     plt.close(fig)
 
-    fig = plt.figure(11)
     data = all_ori_err_mean.numpy()
     binwidth = 0.05
-    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), weights=np.ones(len(data)) / len(data),
-             density=True)
-    percent_scale = 1 / binwidth
-    plt.gca().yaxis.set_major_formatter(formatter)
-    plt.xlabel("Orientation error (rad)")
-    plt.ylabel("Percentage of test objects")
-    plt.title("Histogram of mean test errors in screw axis orientation")
-    plt.tight_layout()
-    plt.savefig(output_dir + '/orientation_test_error_hist.png')
-    plt.close(fig)
+    counts, bins = np.histogram(data, bins=np.arange(0., data.max() + binwidth, binwidth))
+    # bins = 0.5 * (bins[:-1] + bins[1:])
+    fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+    fig1.update_layout(
+        title_text='Histogram of mean test errors in screw axis orientation',  # title of plot
+        xaxis_title_text='Orientation error (rad)',  # xaxis label
+        yaxis_title_text='% test objects',  # yaxis label
+    )
+    fig1.write_image(output_dir + '/orientation_test_error_hist.png')
 
     fig = plt.figure(2)
     plt.errorbar(x_axis, all_dist_err_mean.numpy() * 100., all_dist_err_std.numpy() * 100.,
@@ -338,17 +316,16 @@ if __name__ == "__main__":
     plt.savefig(output_dir + '/distance_test_error.png')
     plt.close(fig)
 
-    fig = plt.figure(21)
-    data = copy.copy(all_dist_err_mean.numpy()) * 100.
+    data = all_dist_err_mean.numpy() * 100.  # Converting to cm
     binwidth = 1.
-    plt.hist(data, bins=np.arange(0., data.max() + binwidth, binwidth), density=True)
-    percent_scale = 1 / binwidth
-    plt.gca().yaxis.set_major_formatter(formatter)
-    plt.xlabel("Spatial distance error (cm)")
-    plt.ylabel("Percentage of test objects")
-    plt.title("Histogram of mean test errors in spatial distance")
-    plt.tight_layout()
-    plt.savefig(output_dir + '/distance_test_error_hist.png')
-    plt.close(fig)
+    counts, bins = np.histogram(data, bins=np.arange(0., data.max() + binwidth, binwidth))
+    # bins = 0.5 * (bins[:-1] + bins[1:])
+    fig1 = go.Figure(data=[go.Histogram(x=bins, y=counts, histnorm='percent')])
+    fig1.update_layout(
+        title_text='Histogram of mean test errors in spatial distance',  # title of plot
+        xaxis_title_text='Spatial distance error (cm)',  # xaxis label
+        yaxis_title_text='% test objects',  # yaxis label
+    )
+    fig1.write_image(output_dir + '/distance_test_error_hist.png')
 
     print("Saved plots in directory {}".format(output_dir))
