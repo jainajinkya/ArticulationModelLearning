@@ -359,4 +359,5 @@ if __name__ == "__main__":
 
     # Storing data for particle filter analysis
     import pickle
-    pickle.dump(s_data, open(output_dir + '/test_prediction_data.pkl', 'wb'))
+    with open(output_dir + '/test_prediction_data.pkl', 'wb') as handle:
+        pickle.dump(s_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
