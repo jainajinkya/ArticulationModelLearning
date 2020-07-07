@@ -85,6 +85,59 @@ class DeepArtModel_v1(nn.Module):
         return x_rnn.view(X_3d.size(0), -1)
 
 
+class DeepArtModel_NoLSTM(nn.Module):
+    def __init__(self, seq_len=16, fc_replace_lstm_dim=1000, n_output=8):
+        super(DeepArtModel_NoLSTM, self).__init__()
+
+        self.fc_res_dim_1 = 512
+        self.fc_replace_lstm_dim = fc_replace_lstm_dim
+        self.fc_replace_lstm_seq_dim = fc_replace_lstm_dim * seq_len
+        self.fc_lstm_dim_1 = 256
+        self.fc_lstm_dim_2 = 128
+        self.n_output = n_output
+
+        self.resnet = models.resnet18()
+        self.fc_res_1 = nn.Linear(self.lstm_input_dim, self.fc_res_dim_1)
+        self.bn_res_1 = nn.BatchNorm1d(self.fc_res_dim_1, momentum=0.01)
+        self.fc_res_2 = nn.Linear(self.fc_res_dim_1, self.fc_replace_lstm_dim)
+
+        self.fc_replace_lstm = nn.Linear(self.fc_replace_lstm_seq_dim, self.fc_replace_lstm_seq_dim)
+
+        self.fc_lstm_1 = nn.Linear(self.fc_replace_lstm_seq_dim, self.fc_lstm_dim_1)
+        self.bn_lstm_1 = nn.BatchNorm1d(self.fc_lstm_dim_1, momentum=0.01)
+        self.fc_lstm_2 = nn.Linear(self.fc_lstm_dim_1, self.fc_lstm_dim_2)
+        self.bn_lstm_2 = nn.BatchNorm1d(self.fc_lstm_dim_2, momentum=0.01)
+        self.dropout_layer1 = nn.Dropout(p=self.drop_p)
+        self.fc_lstm_3 = nn.Linear(self.fc_lstm_dim_2, self.n_output)
+
+    def forward(self, X_3d):
+        # X shape: Batch x Sequence x 3 Channels x img_dims
+        # Run resnet sequentially on the data to generate embedding sequence
+        cnn_embed_seq = []
+        for t in range(X_3d.size(1)):
+            x = self.resnet(X_3d[:, t, :, :, :])
+            x = x.view(x.size(0), -1)
+            x = self.bn_res_1(self.fc_res_1(x))
+            x = F.relu(x)
+            x = self.fc_res_2(x)
+            cnn_embed_seq.append(x)
+
+        # swap time and sample dim such that (sample dim, time dim, CNN latent dim)
+        cnn_embed_seq = torch.stack(cnn_embed_seq, dim=0).transpose_(0, 1)
+
+        # FC replacing LSTM layer
+        cnn_embed_seq = cnn_embed_seq.view(cnn_embed_seq.size(0), -1)
+        x_rnn = F.relu(self.fc_replace_lstm(cnn_embed_seq))
+
+        # FC layers
+        x_rnn = self.bn_lstm_1(self.fc_lstm_1(x_rnn))
+        x_rnn = F.relu(x_rnn)
+        x_rnn = self.bn_lstm_2(self.fc_lstm_2(x_rnn))
+        x_rnn = F.relu(x_rnn)
+        x_rnn = self.fc_lstm_3(x_rnn)
+        return x_rnn.view(X_3d.size(0), -1)
+
+
 def articulation_lstm_loss_spatial_distance_v1(pred, target, wt_on_ortho=1.):
     """ Based on Spatial distance
         Input shapes: Batch X Objects X images
