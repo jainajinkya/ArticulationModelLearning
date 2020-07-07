@@ -179,6 +179,11 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/config_err_hist.png')
         plt.close(fig)
 
+        s_data = {'labels': all_labels.cpu().numpy(), 'predictions': all_output.cpu().numpy(),
+                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std.numpy()': all_ori_err_std.numpy(),
+                  'dist_err_mean': all_dist_err_mean.numpy(), 'ori_dist_std.numpy()': all_dist_err_std.numpy(),
+                  'theta_err_mean': all_q_err_mean.numpy(), 'ori_q_std.numpy()': all_q_err_std.numpy()}
+
     elif args.model_type == 'li':
         print("Testing Model: Li et al.")
 
@@ -209,10 +214,9 @@ if __name__ == "__main__":
 
         obj_idxs = torch.empty(0)  # Recording object indexes for analysis
 
-        # # Data collection for particle filter testing
-        # all_labels = torch.empty(0)
-        # all_preds = torch.empty(0)
-        # all_errs = torch.empty(0)
+        # Data collection for post-processing
+        all_labels = torch.empty(0)
+        all_preds = torch.empty(0)
 
         with torch.no_grad():
             for X in testloader:
@@ -242,10 +246,9 @@ if __name__ == "__main__":
                 all_d_err_mean = torch.cat((all_d_err_std, d_err_mean.cpu()))
                 all_d_err_std = torch.cat((all_d_err_std, d_err_std.cpu()))
 
-                # # Data for particle filter
-                # all_labels = torch.cat((all_labels, labels.cpu()))
-                # all_preds = torch.cat((all_preds, y_pred.cpu()))
-                # all_errs = torch.cat((all_errs, (labels - y_pred).cpu()))
+                # Data for post-processing
+                all_labels = torch.cat((all_labels, labels.cpu()))
+                all_preds = torch.cat((all_preds, y_pred.cpu()))
 
         # Sort objects as per the idxs
         x_axis = np.arange(all_q_err_mean.size(0))
@@ -295,10 +298,11 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/d_err_hist.png')
         plt.close(fig)
 
-        # # Storing data for particle filter analysis
-        # p_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(), 'errors': all_errs.numpy()}
-        # import pickle
-        # pickle.dump(p_data, open(output_dir + '/test_prediction_data.pkl', 'wb'))
+        s_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(),
+                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std.numpy()': all_ori_err_std.numpy(),
+                  'dist_err_mean': all_dist_err_mean.numpy(), 'ori_dist_std.numpy()': all_dist_err_std.numpy(),
+                  'theta_err_mean': all_q_err_mean.numpy(), 'ori_q_std.numpy()': all_q_err_std.numpy(),
+                  'ori_d_mean': all_d_err_mean.numpy(), 'ori_d_std.numpy()': all_d_err_std.numpy()}
 
     """ Common Plots"""
     # Plot variation of screw axis
@@ -352,3 +356,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     print("Saved plots in directory {}".format(output_dir))
+
+    # Storing data for particle filter analysis
+    import pickle
+    pickle.dump(s_data, open(output_dir + '/test_prediction_data.pkl', 'wb'))
