@@ -97,17 +97,16 @@ class DeepArtModel_NoLSTM(nn.Module):
         self.n_output = n_output
 
         self.resnet = models.resnet18()
-        self.fc_res_1 = nn.Linear(self.lstm_input_dim, self.fc_res_dim_1)
+        self.fc_res_1 = nn.Linear(self.fc_replace_lstm_dim, self.fc_res_dim_1)
         self.bn_res_1 = nn.BatchNorm1d(self.fc_res_dim_1, momentum=0.01)
         self.fc_res_2 = nn.Linear(self.fc_res_dim_1, self.fc_replace_lstm_dim)
 
         self.fc_replace_lstm = nn.Linear(self.fc_replace_lstm_seq_dim, self.fc_replace_lstm_seq_dim)
 
-        self.fc_lstm_1 = nn.Linear(self.fc_replace_lstm_seq_dim, self.fc_lstm_dim_1)
+        self.fc_lstm_1 = nn.Linear(self.fc_replace_lstm_dim, self.fc_lstm_dim_1)
         self.bn_lstm_1 = nn.BatchNorm1d(self.fc_lstm_dim_1, momentum=0.01)
         self.fc_lstm_2 = nn.Linear(self.fc_lstm_dim_1, self.fc_lstm_dim_2)
         self.bn_lstm_2 = nn.BatchNorm1d(self.fc_lstm_dim_2, momentum=0.01)
-        self.dropout_layer1 = nn.Dropout(p=self.drop_p)
         self.fc_lstm_3 = nn.Linear(self.fc_lstm_dim_2, self.n_output)
 
     def forward(self, X_3d):
@@ -124,10 +123,11 @@ class DeepArtModel_NoLSTM(nn.Module):
 
         # swap time and sample dim such that (sample dim, time dim, CNN latent dim)
         cnn_embed_seq = torch.stack(cnn_embed_seq, dim=0).transpose_(0, 1)
-
+        
         # FC replacing LSTM layer
-        cnn_embed_seq = cnn_embed_seq.view(cnn_embed_seq.size(0), -1)
+        cnn_embed_seq = cnn_embed_seq.contiguous().view(cnn_embed_seq.size(0), -1)
         x_rnn = F.relu(self.fc_replace_lstm(cnn_embed_seq))
+        x_rnn = x_rnn.view(-1, self.fc_replace_lstm_dim)
 
         # FC layers
         x_rnn = self.bn_lstm_1(self.fc_lstm_1(x_rnn))
