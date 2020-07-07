@@ -180,9 +180,9 @@ if __name__ == "__main__":
         plt.close(fig)
 
         s_data = {'labels': all_labels.cpu().numpy(), 'predictions': all_output.cpu().numpy(),
-                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std.numpy()': all_ori_err_std.numpy(),
-                  'dist_err_mean': all_dist_err_mean.numpy(), 'ori_dist_std.numpy()': all_dist_err_std.numpy(),
-                  'theta_err_mean': all_q_err_mean.numpy(), 'ori_q_std.numpy()': all_q_err_std.numpy()}
+                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std': all_ori_err_std.numpy(),
+                  'dist_err_mean': all_dist_err_mean.numpy(), 'ori_dist_std': all_dist_err_std.numpy(),
+                  'theta_err_mean': all_q_err_mean.numpy(), 'ori_q_std': all_q_err_std.numpy()}
 
     elif args.model_type == 'li':
         print("Testing Model: Li et al.")
@@ -299,10 +299,10 @@ if __name__ == "__main__":
         plt.close(fig)
 
         s_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(),
-                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std.numpy()': all_ori_err_std.numpy(),
-                  'dist_err_mean': all_dist_err_mean.numpy(), 'ori_dist_std.numpy()': all_dist_err_std.numpy(),
-                  'theta_err_mean': all_q_err_mean.numpy(), 'ori_q_std.numpy()': all_q_err_std.numpy(),
-                  'ori_d_mean': all_d_err_mean.numpy(), 'ori_d_std.numpy()': all_d_err_std.numpy()}
+                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std': all_ori_err_std.numpy(),
+                  'dist_err_mean': all_dist_err_mean.numpy(), 'ori_dist_std': all_dist_err_std.numpy(),
+                  'theta_err_mean': all_q_err_mean.numpy(), 'ori_q_std': all_q_err_std.numpy(),
+                  'ori_d_mean': all_d_err_mean.numpy(), 'ori_d_std': all_d_err_std.numpy()}
 
     """ Common Plots"""
     # Plot variation of screw axis
