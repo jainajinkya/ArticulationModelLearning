@@ -4,7 +4,8 @@ from itertools import combinations
 import h5py
 import numpy as np
 import torch
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line, change_frames
+import transforms3d as tf3d
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, change_frames, angle_between, apply_transform
 from torch.utils.data import Dataset
 
 
@@ -42,20 +43,29 @@ class ArticulationDataset(Dataset):
 
         label = np.empty((len(moving_body_poses) - 1, 8))
 
-        pt1 = moving_body_poses[0, :]   # Fixed common reference frame
+        # Correct transforms to confine to the local frame convention: Joint axis along +z axis
+        pt1 = moving_body_poses[0, :]  # Fixed common reference frame
+        pt2 = moving_body_poses[1, :]
+        pt1_T_pt2 = change_frames(pt1, pt2)
+        orig_l, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+                                                 quat_in_wxyz=pt1_T_pt2[3:])
+        desired_l = np.array([0., 0., 1.])  # +z axis
+        correction_axis = np.cross(orig_l, desired_l)
+        correction_angle = angle_between(orig_l, desired_l)
+        correction_transform = tf3d.axangles.axangle2aff(correction_axis, correction_angle)
+
+        # pt1 = moving_body_poses[0, :]
+        pt1 = apply_transform(moving_body_poses[0, :], correction_transform)  # Fixed common reference frame
         for i in range(len(moving_body_poses) - 1):
             # pt1 = moving_body_poses[i, :]
-            pt2 = moving_body_poses[i + 1, :]
+            # pt2 = moving_body_poses[i + 1, :]
+            pt2 = apply_transform(moving_body_poses[i + 1, :], correction_transform)
             pt1_T_pt2 = change_frames(pt1, pt2)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
             label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
-
-            # # Convert screw axis to global coordinates
-            # line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
-            # label[i, :] = np.concatenate((line_global, [theta], [d]))
 
         # Normalize labels
         label[:, 3:6] /= self.normalization_factor
