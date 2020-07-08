@@ -184,6 +184,7 @@ if __name__ == "__main__":
 
     else:
         print("Testing Model: Ours")
+        import pdb; pdb.set_trace()
 
         # load model
         # best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
