@@ -93,7 +93,8 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target, wt_on_ortho=1.):
     # pred = expand_labels(pred)  # Adding 3rd dimension to m, if needed
 
     # Spatial Distance loss
-    dist_err = orientation_difference_bw_plucker_lines(target, pred) ** 2 + distance_bw_plucker_lines(target, pred) ** 2
+    dist_err = orientation_difference_bw_plucker_lines(target, pred) ** 2 + \
+               distance_bw_plucker_lines(target, pred) ** 2
 
     # Configuration Loss
     # conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
