@@ -46,27 +46,30 @@ class ArticulationDataset(Dataset):
         # Correct transforms to confine to the local frame convention: Joint axis along +z axis
         pt1 = moving_body_poses[0, :]  # Fixed common reference frame
         pt2 = moving_body_poses[1, :]
-        pt1_T_pt2 = change_frames(pt1, pt2)
-        orig_l, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
-                                                 quat_in_wxyz=pt1_T_pt2[3:])
+        # pt1_T_pt2 = change_frames(pt1, pt2)
+        pt2_T_pt1 = change_frames(pt2, pt1)
+        orig_l, m, theta, d = transform_to_screw(translation=pt2_T_pt1[:3],
+                                                 quat_in_wxyz=pt2_T_pt1[3:])
         desired_l = np.array([0., 0., 1.])  # +z axis
         correction_axis = np.cross(orig_l, desired_l)
         correction_angle = angle_between(orig_l, desired_l)
+
+        if correction_angle > np.pi/2:
+            desired_l = np.array([0., 0., -1.])  # -z axis
+            correction_axis = np.cross(orig_l, desired_l)
+            correction_angle = angle_between(orig_l, desired_l)
+
         correction_quat = tf3d.quaternions.axangle2quat(correction_axis, correction_angle)
-        # correction_transform = tf3d.axangles.axangle2aff(correction_axis, correction_angle)
 
         pt1 = moving_body_poses[0, :]
-        # pt1 = apply_transform(moving_body_poses[0, :], correction_transform)  # Fixed common reference frame
         for i in range(len(moving_body_poses) - 1):
-            # pt1 = moving_body_poses[i, :]
             pt2 = moving_body_poses[i + 1, :]
-            # pt2 = apply_transform(moving_body_poses[i + 1, :], correction_transform)
-            pt1_T_pt2 = change_frames(pt1, pt2)
-            # pt1_T_pt2 = apply_transform(pt1_T_pt2, correction_transform)
+            # pt1_T_pt2 = change_frames(pt1, pt2)
+            pt2_T_pt1 = change_frames(pt2, pt1)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
-            l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
-                                                    quat_in_wxyz=pt1_T_pt2[3:])
+            l_hat, m, theta, d = transform_to_screw(translation=pt2_T_pt1[:3],
+                                                    quat_in_wxyz=pt2_T_pt1[3:])
             # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
             new_l = transform_plucker_line(np.concatenate((l_hat, m)), trans=np.zeros(3), quat=correction_quat)
             label[i, :] = np.concatenate((new_l, [theta], [d]))  # This defines frames wrt pt 1
