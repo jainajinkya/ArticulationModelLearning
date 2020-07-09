@@ -14,7 +14,8 @@ class ArticulationDataset(Dataset):
                  ntrain,
                  root_dir,
                  n_dof,
-                 norm_factor=1.):
+                 norm_factor=1.,
+                 left_jnt=False):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
@@ -22,6 +23,7 @@ class ArticulationDataset(Dataset):
         self.length = ntrain
         self.n_dof = n_dof
         self.normalization_factor = norm_factor
+        self.left_jnt = left_jnt
 
     def __len__(self):
         return self.length
@@ -42,34 +44,37 @@ class ArticulationDataset(Dataset):
         moving_body_poses = obj_data['moving_frame_in_world']
 
         label = np.empty((len(moving_body_poses) - 1, 8))
-
-        # Correct transforms to confine to the local frame convention: Joint axis along +z axis
+        
+        # Correct transforms to confine to the local frame convention: Joint axis along z axis
         pt1 = moving_body_poses[0, :]  # Fixed common reference frame
         pt2 = moving_body_poses[1, :]
-        # pt1_T_pt2 = change_frames(pt1, pt2)
-        pt2_T_pt1 = change_frames(pt2, pt1)
-        orig_l, m, theta, d = transform_to_screw(translation=pt2_T_pt1[:3],
-                                                 quat_in_wxyz=pt2_T_pt1[3:])
-        desired_l = np.array([0., 0., 1.])  # +z axis
-        correction_axis = np.cross(orig_l, desired_l)
-        correction_angle = angle_between(orig_l, desired_l)
-
-        if correction_angle > np.pi/2:
+        pt1_T_pt2 = change_frames(pt1, pt2)
+        orig_l, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+                                                 quat_in_wxyz=pt1_T_pt2[3:])
+        if self.left_jnt:
             desired_l = np.array([0., 0., -1.])  # -z axis
-            correction_axis = np.cross(orig_l, desired_l)
-            correction_angle = angle_between(orig_l, desired_l)
+        else:
+            desired_l = np.array([0., 0., 1.])
 
-        correction_quat = tf3d.quaternions.axangle2quat(correction_axis, correction_angle)
+        correction_angle = angle_between(orig_l, desired_l)
+       
+        if correction_angle < 1e-6:
+            correction_quat = np.array([1., 0., 0., 0.])
+        elif correction_angle > 3.14:
+            correction_quat = np.array([0., 1., 0., 0.])
+        else:
+            correction_axis = np.cross(orig_l, desired_l)
+            correction_quat = tf3d.quaternions.axangle2quat(correction_axis, correction_angle)
 
         pt1 = moving_body_poses[0, :]
         for i in range(len(moving_body_poses) - 1):
             pt2 = moving_body_poses[i + 1, :]
-            # pt1_T_pt2 = change_frames(pt1, pt2)
-            pt2_T_pt1 = change_frames(pt2, pt1)
+            pt1_T_pt2 = change_frames(pt1, pt2)
+            #pt2_T_pt1 = change_frames(pt2, pt1)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
-            l_hat, m, theta, d = transform_to_screw(translation=pt2_T_pt1[:3],
-                                                    quat_in_wxyz=pt2_T_pt1[3:])
+            l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
+                                                    quat_in_wxyz=pt1_T_pt2[3:])
             # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
             new_l = transform_plucker_line(np.concatenate((l_hat, m)), trans=np.zeros(3), quat=correction_quat)
             label[i, :] = np.concatenate((new_l, [theta], [d]))  # This defines frames wrt pt 1

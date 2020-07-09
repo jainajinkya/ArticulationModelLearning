@@ -47,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('--model-type', type=str, default='ours', help='ours, ben, li')
     parser.add_argument('--load-wts', action='store_true', default=False, help='Should load model wts from prior run?')
     parser.add_argument('--obj', type=str, default='microwave')
-
+    parser.add_argument('--left-jnt', action='store_true', default=False, help='Object has left joint or not?')
     args = parser.parse_args()
 
     ntest = args.ntest * args.aug_multi
@@ -201,7 +201,8 @@ if __name__ == "__main__":
 
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
-                                      n_dof=args.ndof)
+                                      n_dof=args.ndof,
+                                      left_jnt=args.left_jnt)
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                                  shuffle=False, num_workers=args.nwork,
