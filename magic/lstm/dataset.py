@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import torch
 import transforms3d as tf3d
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, change_frames, angle_between, apply_transform
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, change_frames, angle_between, apply_transform, transform_plucker_line
 from torch.utils.data import Dataset
 
 
@@ -52,7 +52,8 @@ class ArticulationDataset(Dataset):
         desired_l = np.array([0., 0., 1.])  # +z axis
         correction_axis = np.cross(orig_l, desired_l)
         correction_angle = angle_between(orig_l, desired_l)
-        correction_transform = tf3d.axangles.axangle2aff(correction_axis, correction_angle)
+        correction_quat = tf3d.quaternions.axangle2quat(correction_axis, correction_angle)
+        # correction_transform = tf3d.axangles.axangle2aff(correction_axis, correction_angle)
 
         pt1 = moving_body_poses[0, :]
         # pt1 = apply_transform(moving_body_poses[0, :], correction_transform)  # Fixed common reference frame
@@ -61,12 +62,14 @@ class ArticulationDataset(Dataset):
             pt2 = moving_body_poses[i + 1, :]
             # pt2 = apply_transform(moving_body_poses[i + 1, :], correction_transform)
             pt1_T_pt2 = change_frames(pt1, pt2)
-            pt1_T_pt2 = apply_transform(pt1_T_pt2, correction_transform)
+            # pt1_T_pt2 = apply_transform(pt1_T_pt2, correction_transform)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
-            label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
+            # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
+            new_l = transform_plucker_line(np.concatenate((l_hat, m)), trans=np.zeros(3), quat=correction_quat)
+            label[i, :] = np.concatenate((new_l, [theta], [d]))  # This defines frames wrt pt 1
 
         # Normalize labels
         label[:, 3:6] /= self.normalization_factor
