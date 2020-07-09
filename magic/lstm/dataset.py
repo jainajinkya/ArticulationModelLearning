@@ -51,7 +51,7 @@ class ArticulationDataset(Dataset):
         pt1_T_pt2 = change_frames(pt1, pt2)
         orig_l, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                  quat_in_wxyz=pt1_T_pt2[3:])
-        if self.left_jnt:
+        if self.left_jnt and abs(d) < 1e-3:
             desired_l = np.array([0., 0., -1.])  # -z axis
         else:
             desired_l = np.array([0., 0., 1.])
