@@ -326,6 +326,11 @@ def change_frames(frame_B_wrt_A, pose_wrt_A):
     return np.concatenate((trans, quat))  # return quat in wxyz
 
 
+def interpret_labels_ours(label, scale):
+    label[:, :, 3:6] *= scale
+    return label
+    
+
 def apply_transform(pose, affine_transform):
     # Pose: len 7 vector [x, y, z, qw, qx, qy, qz]
     pose = tf3d.affines.compose(T=pose[:3],
@@ -335,10 +340,6 @@ def apply_transform(pose, affine_transform):
     trans, rot, scale, _ = tf3d.affines.decompose44(new_pose)
     quat = tf3d.quaternions.mat2quat(rot)
     return np.concatenate((trans, quat))  # return quat in wxyz
-
-
-def interpret_labels(label, scale):
-    return label[:, :, 3:6] * scale
 
 
 def expand_labels(labels, eps=1e-10):
