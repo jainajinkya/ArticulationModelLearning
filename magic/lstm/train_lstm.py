@@ -7,7 +7,8 @@ from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, Ri
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_RT
-from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, articulation_lstm_loss_spatial_distance_v1
+from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, articulation_lstm_loss_spatial_distance_v1,\
+    DeepArtModel_v2
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -105,8 +106,10 @@ if __name__ == "__main__":
         #                           drop_p=args.drop_p, h_fc_dim=256, n_output=8)
         # network = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
         #                        drop_p=args.drop_p, h_fc_dim=256, n_output=8)
-        network = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
-                                  drop_p=args.drop_p, n_output=8)
+        # network = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1,
+        #                           drop_p=args.drop_p, n_output=8)
+
+        network = DeepArtModel_v2(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=8)
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                              shuffle=True, num_workers=args.nwork,
