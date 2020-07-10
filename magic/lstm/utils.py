@@ -351,6 +351,17 @@ def expand_labels(labels, eps=1e-10):
         return torch.cat((l_hat, m, m_3.unsqueeze_(-1), labels[:, :, 5:]), dim=-1)
 
 
+# def expand_labels_v2(labels, left_jnt=False):
+#     label_shape = labels.shape
+#     if left_jnt:
+#         l = torch.tensor([0., 0., -1.]).repeat(label_shape[0], label_shape[1], 1)
+#     else:
+#         l = torch.tensor([0., 0., 1.]).repeat(label_shape[0], label_shape[1], 1)
+#     m = torch.cat((labels[:, :, :2], torch.zeros(label_shape[0], label_shape[1], 1)), dim=-1)
+#     return torch.cat((l, m, labels[:, :, 2:]), dim=-1)
+
+
+
 # Plotting Utils
 def set_axes_radius(ax, origin, radius):
     ax.set_xlim3d([origin[0] - radius, origin[0] + radius])

@@ -40,43 +40,27 @@ class ArticulationDataset(Dataset):
         depth_imgs.unsqueeze_(1).float()
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
-        # # Load labels
+        # Load labels
         moving_body_poses = obj_data['moving_frame_in_world']
-
         label = np.empty((len(moving_body_poses) - 1, 8))
-        
-        # Correct transforms to confine to the local frame convention: Joint axis along z axis
+
+        # Object pose in world
+        obj_pose_in_world = np.array(obj_data['embedding_and_params'])[-7:]  # obj_pose, obj_quat_wxyz
         pt1 = moving_body_poses[0, :]  # Fixed common reference frame
-        pt2 = moving_body_poses[1, :]
-        pt1_T_pt2 = change_frames(pt1, pt2)
-        orig_l, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
-                                                 quat_in_wxyz=pt1_T_pt2[3:])
-        if self.left_jnt and abs(d) < 1e-3:
-            desired_l = np.array([0., 0., -1.])  # -z axis
-        else:
-            desired_l = np.array([0., 0., 1.])
+        obj_T_pt1 = change_frames(obj_pose_in_world, pt1)
 
-        correction_angle = angle_between(orig_l, desired_l)
-       
-        if correction_angle < 1e-6:
-            correction_quat = np.array([1., 0., 0., 0.])
-        elif correction_angle > 3.14:
-            correction_quat = np.array([0., 1., 0., 0.])
-        else:
-            correction_axis = np.cross(orig_l, desired_l)
-            correction_quat = tf3d.quaternions.axangle2quat(correction_axis, correction_angle)
-
-        pt1 = moving_body_poses[0, :]
         for i in range(len(moving_body_poses) - 1):
             pt2 = moving_body_poses[i + 1, :]
             pt1_T_pt2 = change_frames(pt1, pt2)
-            #pt2_T_pt1 = change_frames(pt2, pt1)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
+
             # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
-            new_l = transform_plucker_line(np.concatenate((l_hat, m)), trans=np.zeros(3), quat=correction_quat)
+
+            # Convert line in object_local_coordinates
+            new_l = transform_plucker_line(np.concatenate((l_hat, m)), trans=obj_T_pt1[:3], quat=obj_T_pt1[3:])
             label[i, :] = np.concatenate((new_l, [theta], [d]))  # This defines frames wrt pt 1
 
         # Normalize labels
