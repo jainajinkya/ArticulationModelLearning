@@ -5,7 +5,7 @@ import time
 import matplotlib
 import numpy as np
 import torch
-#from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from tensorboardX import SummaryWriter
 
 matplotlib.use('Agg')
@@ -98,7 +98,7 @@ class ModelTrainer(object):
         self.plot_losses()
         # re-load the best state dictionary that was saved earlier.
         self.model.load_state_dict(torch.load(net_fname, map_location='cpu'))
-        
+
         # export scalar data to JSON for external processing
         self.writer.export_scalars_to_json("./all_scalars.json")
         self.writer.close()
@@ -122,7 +122,7 @@ class ModelTrainer(object):
                 running_loss += -1000
             else:
                 loss.backward()
-                
+
                 # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 20.)
                 # torch.nn.utils.clip_grad_value_(self.model.parameters(), 1.)
@@ -245,7 +245,6 @@ class ModelTrainer(object):
         plt.tight_layout()
         plt.savefig('plots/' + self.name + '/d_err' + fname_suffix + '.png')
         plt.close(fig)
-
 
     def plot_grad_flow(self, named_parameters):
         ''' Plots the gradients flowing through different layers in the net during training.

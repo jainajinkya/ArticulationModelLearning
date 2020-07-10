@@ -4,8 +4,7 @@ from itertools import combinations
 import h5py
 import numpy as np
 import torch
-import transforms3d as tf3d
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, change_frames, angle_between, apply_transform, transform_plucker_line
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, change_frames, transform_plucker_line
 from torch.utils.data import Dataset
 
 

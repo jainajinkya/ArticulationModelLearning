@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, \
-    orientation_difference_bw_plucker_lines, expand_labels, theta_config_error, d_config_error
+    orientation_difference_bw_plucker_lines, theta_config_error, d_config_error
 from torchvision import models
 
 
@@ -94,19 +94,13 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target, wt_on_ortho=1.):
 
     # Spatial Distance loss
     dist_err = orientation_difference_bw_plucker_lines(target, pred) ** 2 + \
-               distance_bw_plucker_lines(target, pred) ** 2
+               2. * distance_bw_plucker_lines(target, pred) ** 2
 
     # Configuration Loss
-    # conf_err = ((target[:, :, 6:].clone() - pred[:, :, 6:].clone()) ** 2).sum(dim=-1)
-    conf_err = theta_config_error(target, pred)**2 + d_config_error(target, pred)**2
+    conf_err = theta_config_error(target, pred) ** 2 + d_config_error(target, pred) ** 2
 
     err = dist_err + conf_err
     loss = torch.mean(err)
-
-    # print("Orientation error: ", ori_error.mean())
-    # print("Distance_error: ", dist_error.mean())
-    # print("Theta error: ", conf_error_theta.mean())
-    # print("d error: ", conf_error_d.mean())
 
     # Ensure l_hat has norm 1.
     loss += torch.mean((torch.norm(pred[:, :, :3], dim=-1) - 1.) ** 2)
@@ -123,7 +117,6 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target, wt_on_ortho=1.):
         print("Configuration loss:{}".format(torch.mean(conf_err)))
 
     return loss
-
 
 # class DeepArtModel_v2(nn.Module):
 #     def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=4):

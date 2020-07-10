@@ -1,12 +1,12 @@
 import argparse
 
-import torch
 import numpy as np
+import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
     ArticulationDatasetV1
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
-    articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, DeepArtModel
+    articulation_lstm_loss_RT
 from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, articulation_lstm_loss_spatial_distance_v1
 
 if __name__ == "__main__":
@@ -45,7 +45,6 @@ if __name__ == "__main__":
     if args.fix_seed:
         torch.manual_seed(1)
         np.random.seed(1)
-
 
     # elif args.model_type == 'lstm_aug':
     #     trainset = ArticulationDatasetV2(ntrain,

@@ -329,7 +329,7 @@ def change_frames(frame_B_wrt_A, pose_wrt_A):
 def interpret_labels_ours(label, scale):
     label[:, :, 3:6] *= scale
     return label
-    
+
 
 def apply_transform(pose, affine_transform):
     # Pose: len 7 vector [x, y, z, qw, qx, qy, qz]
@@ -360,7 +360,6 @@ def expand_labels(labels, eps=1e-10):
 #         l = torch.tensor([0., 0., 1.]).repeat(label_shape[0], label_shape[1], 1)
 #     m = torch.cat((labels[:, :, :2], torch.zeros(label_shape[0], label_shape[1], 1)), dim=-1)
 #     return torch.cat((l, m, labels[:, :, 2:]), dim=-1)
-
 
 
 # Plotting Utils
