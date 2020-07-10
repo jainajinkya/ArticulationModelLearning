@@ -14,8 +14,7 @@ class ArticulationDataset(Dataset):
                  ntrain,
                  root_dir,
                  n_dof,
-                 norm_factor=1.,
-                 left_jnt=False):
+                 norm_factor=1.):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
@@ -23,7 +22,6 @@ class ArticulationDataset(Dataset):
         self.length = ntrain
         self.n_dof = n_dof
         self.normalization_factor = norm_factor
-        self.left_jnt = left_jnt
 
     def __len__(self):
         return self.length

@@ -34,7 +34,6 @@ if __name__ == "__main__":
     parser.add_argument('--wts-dir', type=str, default='models/', help='Dir of saved model wts')
     parser.add_argument('--prior-wts', type=str, default='test', help='Name of saved model wts')
     parser.add_argument('--fix-seed', action='store_true', default=False, help='Should fix seed or not')
-    parser.add_argument('--left-jnt', action='store_true', default=False, help='Object has left joint or not?')
     args = parser.parse_args()
 
     print(args)
@@ -93,13 +92,11 @@ if __name__ == "__main__":
     else:  # Default: 'lstm'
         trainset = ArticulationDataset(ntrain,
                                        args.train_dir,
-                                       n_dof=args.ndof,
-                                       left_jnt=args.left_jnt)
+                                       n_dof=args.ndof)
 
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
-                                      n_dof=args.ndof,
-                                      left_jnt=args.left_jnt)
+                                      n_dof=args.ndof)
         # loss_fn = articulation_lstm_loss_L2
         # loss_fn = articulation_lstm_loss_spatial_distance
         loss_fn = articulation_lstm_loss_spatial_distance_v1
