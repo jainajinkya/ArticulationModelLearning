@@ -13,7 +13,8 @@ class ArticulationDataset(Dataset):
                  ntrain,
                  root_dir,
                  n_dof,
-                 norm_factor=1.):
+                 norm_factor=1.,
+                 transform=None):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
@@ -21,6 +22,7 @@ class ArticulationDataset(Dataset):
         self.length = ntrain
         self.n_dof = n_dof
         self.normalization_factor = norm_factor
+        self.transform = transform
 
     def __len__(self):
         return self.length
@@ -34,7 +36,12 @@ class ArticulationDataset(Dataset):
 
         # Load depth image
         depth_imgs = torch.tensor(obj_data['depth_imgs'])
+
+        if self.transform is not None:
+            depth_imgs = self.transform(depth_imgs)
+
         depth_imgs.unsqueeze_(1).float()
+
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
         # Load labels

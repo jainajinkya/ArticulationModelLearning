@@ -8,6 +8,8 @@ from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_RT
 from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, articulation_lstm_loss_spatial_distance_v1
+from ArticulationModelLearning.magic.lstm.noise_models import DropPixels
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train object learner on articulated object dataset.")
@@ -45,6 +47,9 @@ if __name__ == "__main__":
     if args.fix_seed:
         torch.manual_seed(1)
         np.random.seed(1)
+
+    noiser = DropPixels(p=0.1)
+
 
     # elif args.model_type == 'lstm_aug':
     #     trainset = ArticulationDatasetV2(ntrain,
@@ -91,11 +96,13 @@ if __name__ == "__main__":
     else:  # Default: 'lstm'
         trainset = ArticulationDataset(ntrain,
                                        args.train_dir,
-                                       n_dof=args.ndof)
+                                       n_dof=args.ndof,
+                                       transform=noiser)
 
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
-                                      n_dof=args.ndof)
+                                      n_dof=args.ndof,
+                                      transform=noiser)
         # loss_fn = articulation_lstm_loss_L2
         # loss_fn = articulation_lstm_loss_spatial_distance
         loss_fn = articulation_lstm_loss_spatial_distance_v1
