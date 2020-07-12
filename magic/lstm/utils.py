@@ -181,7 +181,7 @@ def append_all_labels_to_dataset(filename):
     all_data.close()
     print("Added all transforms to the dataset.")
 
-@profile
+
 def distance_bw_plucker_lines(target, prediction, eps=1e-10):
     """ Input shapes Tensors: Batch X #Images X 8
     # Based on formula from Plücker Coordinates for Lines in the Space by Prof. Yan-bin Jia
@@ -206,7 +206,7 @@ def distance_bw_plucker_lines(target, prediction, eps=1e-10):
                                  norm_cross_prod[nonzero_idxs] + eps)
     return dist
 
-@profile
+
 def orientation_difference_bw_plucker_lines(target, prediction, eps=1e-6):
     """ Input shapes Tensors: Batch X #Images X 8
     range of arccos ins [0, pi)"""
@@ -267,7 +267,7 @@ def quaternion_inner_product(q, r):
 def difference_between_quaternions_tensors(q1, q2, eps=1e-6):
     return torch.acos(torch.clamp(2 * quaternion_inner_product(q1, q2) ** 2 - 1, -1 + eps, 1 - eps))
 
-@profile
+
 def transform_plucker_line(line, trans, quat):
     transform = np.zeros((6, 6))
     rot_mat = tf3d.quaternions.quat2mat(quat)
