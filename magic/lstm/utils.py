@@ -7,6 +7,29 @@ import torch
 import transforms3d as tf3d
 
 
+# Vector utils
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+        Taken from source:
+        https://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python/13849249#13849249
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
+
 # Dual Quaternion utils
 def dual_quaternion_to_vecQuat_form(dq):
     trans = dq.translation()
@@ -104,27 +127,27 @@ def detect_model_class(mv_frames):
 #         'd_array': d_array.cpu()
 #     }
 
-    # # A single label consists of reference frame dual quaternion and moving frame quats
-    # ref_dq = label[0, :]
-    # mv_dqs = label[1:, :]
-    #
-    # ref_frame = dual_quaternion_to_vecQuat_form(ref_dq)
-    # mv_frames = []
-    # for dq in mv_dqs:
-    #     mv_frames.append(dual_quaternion_to_vecQuat_form(dq))
-    #
-    # return {
-    #     'reference_frame': ref_frame,
-    #     'moving_frames': mv_frames
-    # }
-    # # Interpret model parameters
-    # model_class, params, configs = detect_model_class(mv_frames)
-    #
-    # # Returns model class, reference frame, configurations, other model parameters
-    # return {'model_class': model_class,
-    #         'reference_frame': ref_frame,
-    #         'configs': configs,
-    #         'params': params}
+# # A single label consists of reference frame dual quaternion and moving frame quats
+# ref_dq = label[0, :]
+# mv_dqs = label[1:, :]
+#
+# ref_frame = dual_quaternion_to_vecQuat_form(ref_dq)
+# mv_frames = []
+# for dq in mv_dqs:
+#     mv_frames.append(dual_quaternion_to_vecQuat_form(dq))
+#
+# return {
+#     'reference_frame': ref_frame,
+#     'moving_frames': mv_frames
+# }
+# # Interpret model parameters
+# model_class, params, configs = detect_model_class(mv_frames)
+#
+# # Returns model class, reference frame, configurations, other model parameters
+# return {'model_class': model_class,
+#         'reference_frame': ref_frame,
+#         'configs': configs,
+#         'params': params}
 
 
 def all_combinations(n):
@@ -303,8 +326,20 @@ def change_frames(frame_B_wrt_A, pose_wrt_A):
     return np.concatenate((trans, quat))  # return quat in wxyz
 
 
-def interpret_labels(label, scale):
-    return label[:, :, 3:6] * scale
+def interpret_labels_ours(label, scale):
+    label[:, :, 3:6] *= scale
+    return label
+
+
+def apply_transform(pose, affine_transform):
+    # Pose: len 7 vector [x, y, z, qw, qx, qy, qz]
+    pose = tf3d.affines.compose(T=pose[:3],
+                                R=tf3d.quaternions.quat2mat(pose[3:]),
+                                Z=np.ones(3))
+    new_pose = affine_transform.dot(pose)
+    trans, rot, scale, _ = tf3d.affines.decompose44(new_pose)
+    quat = tf3d.quaternions.mat2quat(rot)
+    return np.concatenate((trans, quat))  # return quat in wxyz
 
 
 def expand_labels(labels, eps=1e-10):
@@ -313,9 +348,18 @@ def expand_labels(labels, eps=1e-10):
     else:
         l_hat = labels[:, :, :3]
         m = labels[:, :, 3:5]
-        m_3 = -((l_hat[:, :, :2] * m).sum(dim=-1) / (l_hat[:, :, 2] + eps))   # Avoiding zero divide error
+        m_3 = -((l_hat[:, :, :2] * m).sum(dim=-1) / (l_hat[:, :, 2] + eps))  # Avoiding zero divide error
         return torch.cat((l_hat, m, m_3.unsqueeze_(-1), labels[:, :, 5:]), dim=-1)
 
+
+# def expand_labels_v2(labels, left_jnt=False):
+#     label_shape = labels.shape
+#     if left_jnt:
+#         l = torch.tensor([0., 0., -1.]).repeat(label_shape[0], label_shape[1], 1)
+#     else:
+#         l = torch.tensor([0., 0., 1.]).repeat(label_shape[0], label_shape[1], 1)
+#     m = torch.cat((labels[:, :, :2], torch.zeros(label_shape[0], label_shape[1], 1)), dim=-1)
+#     return torch.cat((l, m, labels[:, :, 2:]), dim=-1)
 
 
 # Plotting Utils

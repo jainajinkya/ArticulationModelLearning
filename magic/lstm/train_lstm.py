@@ -1,7 +1,7 @@
 import argparse
 
-import torch
 import numpy as np
+import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset, \
     ArticulationDatasetV1
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
@@ -9,6 +9,8 @@ from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, Kinema
 	articulation_lstm_loss_RT, articulation_lstm_loss_spatial_distance, \
     DeepArtModel, articulation_lstm_loss_L2
 from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, articulation_lstm_loss_spatial_distance_v1
+from ArticulationModelLearning.magic.lstm.noise_models import DropPixels
+
 
 
 if __name__ == "__main__":
@@ -48,6 +50,8 @@ if __name__ == "__main__":
     if args.fix_seed:
         torch.manual_seed(1)
         np.random.seed(1)
+
+    noiser = DropPixels(p=0.1)
 
 
     # elif args.model_type == 'lstm_aug':
@@ -95,13 +99,15 @@ if __name__ == "__main__":
     else:  # Default: 'lstm'
         trainset = ArticulationDataset(ntrain,
                                        args.train_dir,
-                                       n_dof=args.ndof)
+                                       n_dof=args.ndof,
+                                       transform=noiser)
 
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
-                                      n_dof=args.ndof)
-
+                                      n_dof=args.ndof,
+                                      transform=noiser)
         loss_fn = articulation_lstm_loss_L2
+
         # loss_fn = articulation_lstm_loss_spatial_distance
         # loss_fn = articulation_lstm_loss_spatial_distance_v1
 
@@ -137,8 +143,8 @@ if __name__ == "__main__":
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
-    ## Debug
-    torch.autograd.set_detect_anomaly(True)
+    # ## Debug
+    # torch.autograd.set_detect_anomaly(True)
 
     trainer = ModelTrainer(model=network,
                            train_loader=trainloader,

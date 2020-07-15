@@ -11,3 +11,4 @@ profile
 .idea/*
 runs/
 *.json
+*.ipynb_checkpoints/

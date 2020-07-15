@@ -6,17 +6,18 @@ import matplotlib
 import numpy as np
 import torch
 from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
-from ArticulationModelLearning.magic.lstm.models import DeepArtModel
-from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, difference_between_quaternions_tensors
+from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1
+from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, \
+    difference_between_quaternions_tensors, interpret_labels_ours
 from GeneralizingKinematics.magic.mixture import mdn
 from GeneralizingKinematics.magic.mixture.dataset import MixtureDataset
 from GeneralizingKinematics.magic.mixture.models import KinematicMDNv3
 from GeneralizingKinematics.magic.mixture.utils import *
 from matplotlib.ticker import FuncFormatter
-from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1
 
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+
 
 def to_percent(y, position):
     # Ignore the passed in position. This has the effect of scaling the default
@@ -47,7 +48,6 @@ if __name__ == "__main__":
     parser.add_argument('--model-type', type=str, default='ours', help='ours, ben, li')
     parser.add_argument('--load-wts', action='store_true', default=False, help='Should load model wts from prior run?')
     parser.add_argument('--obj', type=str, default='microwave')
-
     args = parser.parse_args()
 
     ntest = args.ntest * args.aug_multi
@@ -179,6 +179,11 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/config_err_hist.png')
         plt.close(fig)
 
+        s_data = {'labels': all_labels.cpu().numpy(), 'predictions': all_output.cpu().numpy(),
+                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std': all_ori_err_std.numpy(),
+                  'dist_err_mean': all_dist_err_mean.numpy(), 'dist_err_std': all_dist_err_std.numpy(),
+                  'q_err_mean': all_q_err_mean.numpy(), 'q_err_std': all_q_err_std.numpy()}
+
     elif args.model_type == 'li':
         print("Testing Model: Li et al.")
 
@@ -187,9 +192,9 @@ if __name__ == "__main__":
 
         # load model
         # best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
-        #best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
+        # best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
         best_model = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=8)
-        
+
         best_model.load_state_dict(torch.load(os.path.join(args.model_dir, args.model_name + '.net')))
         best_model.float().to(device)
         best_model.eval()
@@ -209,10 +214,9 @@ if __name__ == "__main__":
 
         obj_idxs = torch.empty(0)  # Recording object indexes for analysis
 
-        # # Data collection for particle filter testing
-        # all_labels = torch.empty(0)
-        # all_preds = torch.empty(0)
-        # all_errs = torch.empty(0)
+        # Data collection for post-processing
+        all_labels = torch.empty(0)
+        all_preds = torch.empty(0)
 
         with torch.no_grad():
             for X in testloader:
@@ -220,6 +224,9 @@ if __name__ == "__main__":
                 y_pred = best_model(depth)
                 y_pred = y_pred.view(y_pred.size(0), -1, 8)
                 y_pred = y_pred[:, 1:, :]
+
+                labels = interpret_labels_ours(labels, testset.normalization_factor)  # Scaling m appropriately
+                y_pred = interpret_labels_ours(y_pred, testset.normalization_factor)
 
                 # Orientation error
                 ori_err_std, ori_err_mean = torch.std_mean(torch.acos(
@@ -242,10 +249,9 @@ if __name__ == "__main__":
                 all_d_err_mean = torch.cat((all_d_err_std, d_err_mean.cpu()))
                 all_d_err_std = torch.cat((all_d_err_std, d_err_std.cpu()))
 
-                # # Data for particle filter
-                # all_labels = torch.cat((all_labels, labels.cpu()))
-                # all_preds = torch.cat((all_preds, y_pred.cpu()))
-                # all_errs = torch.cat((all_errs, (labels - y_pred).cpu()))
+                # Data for post-processing
+                all_labels = torch.cat((all_labels, labels.cpu()))
+                all_preds = torch.cat((all_preds, y_pred.cpu()))
 
         # Sort objects as per the idxs
         x_axis = np.arange(all_q_err_mean.size(0))
@@ -295,10 +301,11 @@ if __name__ == "__main__":
         plt.savefig(output_dir + '/d_err_hist.png')
         plt.close(fig)
 
-        # # Storing data for particle filter analysis
-        # p_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(), 'errors': all_errs.numpy()}
-        # import pickle
-        # pickle.dump(p_data, open(output_dir + '/test_prediction_data.pkl', 'wb'))
+        s_data = {'labels': all_labels.numpy(), 'predictions': all_preds.numpy(),
+                  'ori_err_mean': all_ori_err_mean.numpy(), 'ori_err_std': all_ori_err_std.numpy(),
+                  'dist_err_mean': all_dist_err_mean.numpy(), 'dist_err_std': all_dist_err_std.numpy(),
+                  'theta_err_mean': all_q_err_mean.numpy(), 'theta_err_std': all_q_err_std.numpy(),
+                  'd_err_mean': all_d_err_mean.numpy(), 'd_err_std': all_d_err_std.numpy()}
 
     """ Common Plots"""
     # Plot variation of screw axis
@@ -352,3 +359,9 @@ if __name__ == "__main__":
     plt.close(fig)
 
     print("Saved plots in directory {}".format(output_dir))
+
+    # Storing data for particle filter analysis
+    import pickle
+
+    with open(output_dir + '/test_prediction_data.pkl', 'wb') as handle:
+        pickle.dump(s_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
