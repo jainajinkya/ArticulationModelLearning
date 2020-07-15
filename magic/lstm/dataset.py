@@ -4,7 +4,7 @@ from itertools import combinations
 import h5py
 import numpy as np
 import torch
-from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, transform_plucker_line, change_frames
+from ArticulationModelLearning.magic.lstm.utils import transform_to_screw, change_frames, transform_plucker_line
 from torch.utils.data import Dataset
 
 
@@ -13,7 +13,8 @@ class ArticulationDataset(Dataset):
                  ntrain,
                  root_dir,
                  n_dof,
-                 norm_factor=1.):
+                 norm_factor=1.,
+                 transform=None):
         super(ArticulationDataset, self).__init__()
 
         self.root_dir = root_dir
@@ -21,6 +22,7 @@ class ArticulationDataset(Dataset):
         self.length = ntrain
         self.n_dof = n_dof
         self.normalization_factor = norm_factor
+        self.transform = transform
 
     def __len__(self):
         return self.length
@@ -34,28 +36,36 @@ class ArticulationDataset(Dataset):
 
         # Load depth image
         depth_imgs = torch.tensor(obj_data['depth_imgs'])
+
+        if self.transform is not None:
+            depth_imgs = self.transform(depth_imgs)
+
         depth_imgs.unsqueeze_(1).float()
+
         depth_imgs = torch.cat((depth_imgs, depth_imgs, depth_imgs), dim=1)
 
-        # # Load labels
+        # Load labels
         moving_body_poses = obj_data['moving_frame_in_world']
-
         label = np.empty((len(moving_body_poses) - 1, 8))
 
-        pt1 = moving_body_poses[0, :]   # Fixed common reference frame
+        # Object pose in world
+        obj_pose_in_world = np.array(obj_data['embedding_and_params'])[-7:]  # obj_pose, obj_quat_wxyz
+        pt1 = moving_body_poses[0, :]  # Fixed common reference frame
+        obj_T_pt1 = change_frames(obj_pose_in_world, pt1)
+
         for i in range(len(moving_body_poses) - 1):
-            # pt1 = moving_body_poses[i, :]
             pt2 = moving_body_poses[i + 1, :]
             pt1_T_pt2 = change_frames(pt1, pt2)
 
             # Generating labels in screw notation: label := <l_hat, m, theta, d> = <3, 3, 1, 1>
             l_hat, m, theta, d = transform_to_screw(translation=pt1_T_pt2[:3],
                                                     quat_in_wxyz=pt1_T_pt2[3:])
-            label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
 
-            # # Convert screw axis to global coordinates
-            # line_global = transform_plucker_line(np.concatenate((l_hat, m)), trans=pt1[:3], quat=pt1[3:])
-            # label[i, :] = np.concatenate((line_global, [theta], [d]))
+            # label[i, :] = np.concatenate((l_hat, m, [theta], [d]))  # This defines frames wrt pt 1
+
+            # Convert line in object_local_coordinates
+            new_l = transform_plucker_line(np.concatenate((l_hat, m)), trans=obj_T_pt1[:3], quat=obj_T_pt1[3:])
+            label[i, :] = np.concatenate((new_l, [theta], [d]))  # This defines frames wrt pt 1
 
         # Normalize labels
         label[:, 3:6] /= self.normalization_factor

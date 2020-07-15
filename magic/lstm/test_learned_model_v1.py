@@ -174,7 +174,8 @@ if __name__ == "__main__":
 
         testset = ArticulationDataset(ntest,
                                       args.test_dir,
-                                      n_dof=args.ndof)
+                                      n_dof=args.ndof,
+                                      norm_factor=1.)
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                                  shuffle=False, num_workers=args.nwork,
