@@ -86,7 +86,7 @@ class DeepArtModel_v1(nn.Module):
 
 
 class DeepArtModel_NoLSTM(nn.Module):
-    def __init__(self, seq_len=16, fc_replace_lstm_dim=1000, n_output=8):
+    def __init__(self, seq_len=16, fc_replace_lstm_dim=128, n_output=8):
         super(DeepArtModel_NoLSTM, self).__init__()
 
         self.fc_res_dim_1 = 512
@@ -97,11 +97,12 @@ class DeepArtModel_NoLSTM(nn.Module):
         self.n_output = n_output
 
         self.resnet = models.resnet18()
-        self.fc_res_1 = nn.Linear(self.fc_replace_lstm_dim, self.fc_res_dim_1)
+        self.fc_res_1 = nn.Linear(1000, self.fc_res_dim_1)
         self.bn_res_1 = nn.BatchNorm1d(self.fc_res_dim_1, momentum=0.01)
         self.fc_res_2 = nn.Linear(self.fc_res_dim_1, self.fc_replace_lstm_dim)
 
-        self.fc_replace_lstm = nn.Linear(self.fc_replace_lstm_seq_dim, self.fc_replace_lstm_seq_dim)
+        self.fc_replace_lstm_1 = nn.Linear(self.fc_replace_lstm_seq_dim, self.fc_replace_lstm_seq_dim)
+        self.fc_replace_lstm_2 = nn.Linear(self.fc_replace_lstm_seq_dim, self.fc_replace_lstm_seq_dim)
 
         self.fc_lstm_1 = nn.Linear(self.fc_replace_lstm_dim, self.fc_lstm_dim_1)
         self.bn_lstm_1 = nn.BatchNorm1d(self.fc_lstm_dim_1, momentum=0.01)
@@ -126,7 +127,8 @@ class DeepArtModel_NoLSTM(nn.Module):
         
         # FC replacing LSTM layer
         cnn_embed_seq = cnn_embed_seq.contiguous().view(cnn_embed_seq.size(0), -1)
-        x_rnn = F.relu(self.fc_replace_lstm(cnn_embed_seq))
+        x_rnn = F.relu(self.fc_replace_lstm_1(cnn_embed_seq))
+        x_rnn = F.relu(self.fc_replace_lstm_2(x_rnn))
         x_rnn = x_rnn.view(-1, self.fc_replace_lstm_dim)
 
         # FC layers
