@@ -195,7 +195,7 @@ if __name__ == "__main__":
         # best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
         #best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
         # best_model = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=8)
-        best_model = DeepArtModel_NoLSTM(seq_len=16, fc_replace_lstm_dim=128, n_output=8)
+        best_model = DeepArtModel_NoLSTM(seq_len=16, fc_replace_lstm_dim=1000, n_output=8)
 
         best_model.load_state_dict(torch.load(os.path.join(args.model_dir, args.model_name + '.net')))
         best_model.float().to(device)
