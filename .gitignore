@@ -12,3 +12,4 @@ profile
 runs/
 *.json
 *.ipynb_checkpoints/
+*.ipynb
