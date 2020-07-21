@@ -168,6 +168,41 @@ def articulation_lstm_loss_spatial_distance_v1(pred, target, wt_on_ortho=1.):
 
     return loss
 
+
+def articulation_lstm_loss_spatial_distance_RT(pred, target, wt_on_ortho=1.):
+    """ Based on Spatial distance
+        Input shapes: Batch X 8
+    """
+    pred = pred.unsqueeze_(1)
+    target = target.unsqueeze_(1)
+    # pred = expand_labels(pred)  # Adding 3rd dimension to m, if needed
+
+    # Spatial Distance loss
+    dist_err = orientation_difference_bw_plucker_lines(target, pred) ** 2 + \
+               2. * distance_bw_plucker_lines(target, pred) ** 2
+
+    # Configuration Loss
+    conf_err = theta_config_error(target, pred) ** 2 + d_config_error(target, pred) ** 2
+
+    err = dist_err + conf_err
+    loss = torch.mean(err)
+
+    # Ensure l_hat has norm 1.
+    loss += torch.mean((torch.norm(pred[:, :, :3], dim=-1) - 1.) ** 2)
+
+    # Ensure orthogonality between l_hat and m
+    loss += wt_on_ortho * torch.mean(torch.abs(torch.sum(torch.mul(pred[:, :, :3], pred[:, :, 3:6]), dim=-1)))
+
+    if torch.isnan(loss):
+        print("target: Min: {},  Max{}".format(target.min(), target.max()))
+        print("Prediction: Min: {},  Max{}".format(pred.min(), pred.max()))
+        print("L2 error: {}".format(torch.mean((target - pred) ** 2)))
+        print("Distance loss:{}".format(torch.mean(orientation_difference_bw_plucker_lines(target, pred) ** 2)))
+        print("Orientation loss:{}".format(torch.mean(distance_bw_plucker_lines(target, pred) ** 2)))
+        print("Configuration loss:{}".format(torch.mean(conf_err)))
+
+    return loss
+
 # class DeepArtModel_v2(nn.Module):
 #     def __init__(self, lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=4):
 #         super(DeepArtModel_v2, self).__init__()
