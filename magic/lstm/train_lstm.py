@@ -8,7 +8,7 @@ from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_RT
 from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, DeepArtModel_RT, \
-    articulation_lstm_loss_spatial_distance_v1, articulation_lstm_loss_spatial_distance_RT,
+    articulation_lstm_loss_spatial_distance_v1, articulation_lstm_loss_spatial_distance_RT
 from ArticulationModelLearning.magic.lstm.noise_models import DropPixels
 
 
