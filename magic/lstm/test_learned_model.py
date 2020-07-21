@@ -5,8 +5,8 @@ import os
 import matplotlib
 import numpy as np
 import torch
-from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset
-from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1
+from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, RigidTransformDataset
+from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, DeepArtModel_RT
 from ArticulationModelLearning.magic.lstm.utils import distance_bw_plucker_lines, \
     difference_between_quaternions_tensors, interpret_labels_ours
 from GeneralizingKinematics.magic.mixture import mdn
@@ -193,15 +193,16 @@ if __name__ == "__main__":
         # load model
         # best_model = KinematicLSTMv0(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
         # best_model = DeepArtModel(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, h_fc_dim=256, n_output=8)
-        best_model = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=8)
+        # best_model = DeepArtModel_v1(lstm_hidden_dim=1000, n_lstm_hidden_layers=1, n_output=8)
+        best_model = DeepArtModel_RT(n_output=8)
 
         best_model.load_state_dict(torch.load(os.path.join(args.model_dir, args.model_name + '.net')))
         best_model.float().to(device)
         best_model.eval()
 
-        testset = ArticulationDataset(ntest,
-                                      args.test_dir,
-                                      n_dof=args.ndof)
+        testset = RigidTransformDataset(ntest,
+                                        args.test_dir,
+                                        n_dof=args.ndof)
 
         testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch,
                                                  shuffle=False, num_workers=args.nwork,
@@ -222,8 +223,11 @@ if __name__ == "__main__":
             for X in testloader:
                 depth, labels = X['depth'].to(device), X['label'].to(device)
                 y_pred = best_model(depth)
-                y_pred = y_pred.view(y_pred.size(0), -1, 8)
-                y_pred = y_pred[:, 1:, :]
+                # y_pred = y_pred.view(y_pred.size(0), -1, 8)
+                # y_pred = y_pred[:, 1:, :]
+
+                y_pred.unsqueeze_(1)
+                labels.unsqueeze_(1)
 
                 labels = interpret_labels_ours(labels, testset.normalization_factor)  # Scaling m appropriately
                 y_pred = interpret_labels_ours(y_pred, testset.normalization_factor)
