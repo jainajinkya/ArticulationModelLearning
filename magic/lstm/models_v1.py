@@ -85,6 +85,56 @@ class DeepArtModel_v1(nn.Module):
         return x_rnn.view(X_3d.size(0), -1)
 
 
+class DeepArtModel_RT(nn.Module):
+    def __init__(self, n_output=8):
+        super(DeepArtModel_RT, self).__init__()
+
+        self.fc_mlp_dim_1 = 2000
+        self.fc_mlp_dim_2 = 512
+        self.fc_mlp_dim_3 = 256
+        self.n_output = n_output
+
+        self.resnet = models.resnet18()
+        self.bn_res_1 = nn.BatchNorm1d(1000, momentum=0.01)
+
+        self.fc_mlp_1 = nn.Linear(self.fc_mlp_dim_1, self.fc_mlp_dim_1)
+        self.bn_mlp_1 = nn.BatchNorm1d(self.fc_mlp_dim_1, momentum=0.01)
+        self.fc_mlp_2 = nn.Linear(self.fc_mlp_dim_1, self.fc_mlp_dim_2)
+        self.bn_mlp_2 = nn.BatchNorm1d(self.fc_mlp_dim_2, momentum=0.01)
+        self.fc_mlp_3 = nn.Linear(self.fc_mlp_dim_2, self.fc_mlp_dim_3)
+        self.bn_mlp_3 = nn.BatchNorm1d(self.fc_mlp_dim_3, momentum=0.01)
+        self.fc_mlp_4 = nn.Linear(self.fc_mlp_dim_3, self.n_output)
+
+    def forward(self, X_3d):
+        # X shape: Batch x Sequence x 3 Channels x img_dims
+        # Run resnet sequentially on the data to generate embedding sequence
+        cnn_embed_seq = []
+        for t in range(X_3d.size(1)):
+            x = self.resnet(X_3d[:, t, :, :, :])
+            x = x.view(x.size(0), -1)
+            x = self.bn_res_1(x)
+            cnn_embed_seq.append(x)
+
+        # swap time and sample dim such that (sample dim, time dim, CNN latent dim)
+        cnn_embed_seq = torch.stack(cnn_embed_seq, dim=0).transpose_(0, 1)
+        x_rnn = cnn_embed_seq.contiguous().view(-1, self.fc_mlp_dim_1)
+
+        # FC layers
+        x_rnn = self.fc_mlp_1(x_rnn)
+        x_rnn = F.relu(x_rnn)
+        x_rnn = self.bn_mlp_1(x_rnn)
+        x_rnn = self.fc_mlp_2(x_rnn)
+        x_rnn = F.relu(x_rnn)
+        x_rnn = self.bn_mlp_2(x_rnn)
+        x_rnn = self.fc_mlp_3(x_rnn)
+        x_rnn = F.relu(x_rnn)
+        x_rnn = self.bn_mlp_3(x_rnn)
+        x_rnn = self.fc_mlp_4(x_rnn)
+        return x_rnn.view(X_3d.size(0), -1)
+
+
+
+
 def articulation_lstm_loss_spatial_distance_v1(pred, target, wt_on_ortho=1.):
     """ Based on Spatial distance
         Input shapes: Batch X Objects X images

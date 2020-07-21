@@ -7,7 +7,8 @@ from ArticulationModelLearning.magic.lstm.dataset import ArticulationDataset, Ri
 from ArticulationModelLearning.magic.lstm.model_trainer import ModelTrainer
 from ArticulationModelLearning.magic.lstm.models import RigidTransformV0, KinematicLSTMv1, \
     articulation_lstm_loss_RT
-from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, articulation_lstm_loss_spatial_distance_v1
+from ArticulationModelLearning.magic.lstm.models_v1 import DeepArtModel_v1, DeepArtModel_RT, \
+    articulation_lstm_loss_spatial_distance_v1,
 from ArticulationModelLearning.magic.lstm.noise_models import DropPixels
 
 
@@ -68,15 +69,19 @@ if __name__ == "__main__":
         '''Rigid Transform Datasets'''
         trainset = RigidTransformDataset(ntrain,
                                          args.train_dir,
-                                         n_dof=args.ndof)
+                                         n_dof=args.ndof,
+                                         transform=noiser)
 
         testset = RigidTransformDataset(ntest,
                                         args.test_dir,
-                                        n_dof=args.ndof)
+                                        n_dof=args.ndof,
+                                        transform=noiser)
 
-        loss_fn = articulation_lstm_loss_RT
+        # loss_fn = articulation_lstm_loss_RT
+        loss_fn = articulation_lstm_loss_spatial_distance_v1
 
-        network = RigidTransformV0(drop_p=args.drop_p, n_output=8)
+        # network = RigidTransformV0(drop_p=args.drop_p, n_output=8)
+        network = DeepArtModel_RT(n_output=8)
 
     elif args.model_type == 'lstm_rt':
         ## Sequence and 2 images
