@@ -254,7 +254,7 @@ class RigidTransformDataset(Dataset):
         label = np.concatenate((new_l, [theta], [d]))  # This defines frames wrt pt 1
 
         # Normalize labels
-        label[:, 3:6] /= self.normalization_factor
+        label[3:6] /= self.normalization_factor
 
         label = torch.from_numpy(label).float()
         sample = {'depth': depth_imgs,
