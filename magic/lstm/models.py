@@ -352,8 +352,11 @@ def articulation_lstm_loss_L2(pred, target, wt_on_ax_std=1.0, wt_on_ortho=1., ex
     err = (pred - target) ** 2
     loss = torch.mean(err)
 
-    # Penalize spread of screw axis
-    loss += wt_on_ax_std * (torch.mean(err.std(dim=1)[:6]))
+    # # Penalize spread of screw axis
+    # loss += wt_on_ax_std * (torch.mean(err.std(dim=1)[:6]))
+
+    # Ensure l_hat has norm 1.
+    loss += torch.mean((torch.norm(pred[:, :, :3], dim=-1) - 1.) ** 2)
 
     # Ensure orthogonality between l_hat and m
     loss += wt_on_ortho * torch.mean(torch.abs(torch.sum(torch.mul(pred[:, :, :3], pred[:, :, 3:6]), dim=-1)))
@@ -369,4 +372,9 @@ def articulation_lstm_loss_L2(pred, target, wt_on_ax_std=1.0, wt_on_ortho=1., ex
 
     # Extra weight on configuration errors
     loss += torch.mean(extra_indiv_wts[2] * err[:, :, 6:])
+
+    if torch.isnan(loss):
+        print("target: Min: {},  Max{}".format(target.min(), target.max()))
+        print("Prediction: Min: {},  Max{}".format(pred.min(), pred.max()))
+        print("L2 error: {}".format(torch.mean((target - pred) ** 2)))
     return loss
