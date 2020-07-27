@@ -371,3 +371,5 @@ if __name__ == "__main__":
 
     with open(output_dir + '/test_prediction_data.pkl', 'wb') as handle:
         pickle.dump(s_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    print("Saved test data in directory {}".format(output_dir))
