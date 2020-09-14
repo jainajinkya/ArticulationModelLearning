@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='us-ascii'?>
+<mujoco model="partnet_2950d1baed4dbd78c59350d819542ec7">
+    <compiler angle="radian" eulerseq="zxy" meshdir="textured_objs/" />
+    <size nconmax="100" njmax="500" />
+    <asset>
+		<mesh file="original-23.stl" name="original-23" />
+        <mesh file="original-34.stl" name="original-34" />
+        <mesh file="original-38.stl" name="original-38" />
+        <mesh file="original-29.stl" name="original-29" />
+        <mesh file="original-45.stl" name="original-45" />
+        <mesh file="original-42.stl" name="original-42" />
+        <mesh file="original-43.stl" name="original-43" />
+        <mesh file="original-48.stl" name="original-48" />
+        <mesh file="original-44.stl" name="original-44" />
+        <mesh file="original-47.stl" name="original-47" />
+        <mesh file="original-49.stl" name="original-49" />
+        <mesh file="original-15.stl" name="original-15" />
+        <mesh file="original-14.stl" name="original-14" />
+        <mesh file="original-11.stl" name="original-11" />
+        <mesh file="original-10.stl" name="original-10" />
+        <mesh file="original-30.stl" name="original-30" />
+        <mesh file="original-50.stl" name="original-50" />
+        <mesh file="original-5.stl" name="original-5" />
+        <mesh file="original-2.stl" name="original-2" />
+        <mesh file="original-19.stl" name="original-19" />
+        <mesh file="original-7.stl" name="original-7" />
+        <mesh file="original-26.stl" name="original-26" />
+        <mesh file="original-25.stl" name="original-25" />
+        <mesh file="original-24.stl" name="original-24" />
+        <mesh file="original-3.stl" name="original-3" />
+        <mesh file="original-27.stl" name="original-27" />
+        <mesh file="original-8.stl" name="original-8" />
+        <mesh file="original-6.stl" name="original-6" />
+        <mesh file="original-28.stl" name="original-28" />
+        <mesh file="original-32.stl" name="original-32" />
+        <mesh file="original-36.stl" name="original-36" />
+        <mesh file="original-22.stl" name="original-22" />
+        <mesh file="original-4.stl" name="original-4" />
+        <mesh file="original-39.stl" name="original-39" />
+        <mesh file="original-33.stl" name="original-33" />
+        <mesh file="original-37.stl" name="original-37" />
+        <mesh file="original-40.stl" name="original-40" />
+        <mesh file="original-18.stl" name="original-18" />
+        <mesh file="original-16.stl" name="original-16" />
+        <mesh file="original-17.stl" name="original-17" />
+        <mesh file="original-12.stl" name="original-12" />
+		<texture builtin="flat" height="32" name="objTex" rgb1="1 1 1" type="cube" width="32" />
+		<texture builtin="flat" height="32" name="handleTex" rgb1="0.8 0.8 0.8" type="cube" width="32" />
+		<material name="geomObj" shininess="0.03" specular="0.75" texture="objTex" />
+		<material name="geomHandle" shininess="0.03" specular="0.75" texture="handleTex" />
+	</asset>
+	<worldbody>
+		<body name="base" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0">
+			<geom material="geomObj" mesh="original-15" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-14" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-11" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-10" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-30" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-50" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-5" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-2" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-19" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-7" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-26" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-25" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-24" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-3" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-27" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-8" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-6" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-28" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-32" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-36" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-22" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-4" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-39" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-33" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-37" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-40" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-18" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-16" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-17" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<geom material="geomObj" mesh="original-12" quat="0.5 0.5 -0.5 -0.5" type="mesh" />
+			<body name="link_0" pos="-0.472396 0.0256518 0.0692093" quat="0.5 0.5 -0.5 -0.5">
+				<inertial diaginertia="9.77233 7.75724 3.65604" mass="43.0217" pos="0.0305805 -0.0986264 -0.199105" quat="0.582778 0.812631 0 0" />
+				<joint axis="0 0 1" limited="true" name="joint_0" pos="0 0 0" range="0 0.724" type="slide" />
+				<geom material="geomObj" mesh="original-23" name="shelf" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-34" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-38" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-29" name="cabinet_door" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-45" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-42" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-43" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-48" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-44" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomObj" mesh="original-47" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+				<geom material="geomHandle" mesh="original-49" name="handle" pos="0.0256518 -0.0692093 -0.472396" type="mesh" />
+			</body>
+		</body>
+		<body name="external_camera_0_body" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0">
+			<camera euler="-1.57 1.57 0.0" fovy="85" name="external_camera_0" pos="0. 0. 0." />
+			<inertial diaginertia="1 1 1" mass="1" pos="0.0 0.0 0.0" />
+			<joint axis="1 0 0" name="external_camera_0_jnt" pos="0. 0. 0." type="free" />
+		</body>
+	</worldbody>
+	<option gravity="0.0 0.0 0.0" />
+	<option>
+		<flag contact="disable" />
+	</option>
+	<statistic center="0.0 0.0 0.0" extent="1.0" />
+	<visual>
+		<map fogend="5." fogstart="3." force="0.1" zfar="12" znear="0.1" />
+	</visual>
+	<actuator>
+		<velocity joint="joint_0" kv="10" name="act_0" />
+		<velocity joint="external_camera_0_jnt" kv="10" name="act_1" />
+	</actuator>
+</mujoco>
